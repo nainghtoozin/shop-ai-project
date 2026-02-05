@@ -57,7 +57,7 @@
                         <i class="bi bi-cart3"></i>
                         @php($navCartCount = collect(session('cart', []))->sum('quantity'))
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger {{ $navCartCount > 0 ? '' : 'd-none' }}" data-cart-badge>
-                            {{ $navCartCount }}
+                            <span data-cart-count>{{ $navCartCount }}</span>
                             <span class="visually-hidden">items in cart</span>
                         </span>
                     </a>
@@ -460,12 +460,8 @@
         function updateCartBadge(count) {
             document.querySelectorAll('[data-cart-badge]').forEach((el) => {
                 const c = Number(count || 0);
-                const hidden = el.querySelector('.visually-hidden');
-                if (hidden && el.childNodes.length > 0) {
-                    el.childNodes[0].nodeValue = String(c) + ' ';
-                } else {
-                    el.textContent = c;
-                }
+                const countEl = el.querySelector('[data-cart-count]');
+                if (countEl) countEl.textContent = String(c);
                 if (c > 0) {
                     el.classList.remove('d-none');
                 } else {
@@ -508,7 +504,8 @@
             const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
             try {
-                const res = await fetch(form.action, {
+                const url = form.getAttribute('action') || form.action;
+                const res = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',

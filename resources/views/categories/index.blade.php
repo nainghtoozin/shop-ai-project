@@ -40,7 +40,7 @@
                         @php($navCartCount = collect(session('cart', []))->sum('quantity'))
                         @if ($navCartCount > 0)
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                {{ $navCartCount }}
+                                <span data-cart-count>{{ $navCartCount }}</span>
                                 <span class="visually-hidden">items in cart</span>
                             </span>
                         @endif
