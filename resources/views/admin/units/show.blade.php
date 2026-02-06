@@ -10,9 +10,11 @@
             <a href="{{ route('admin.units.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left me-2"></i>Back to Units
             </a>
-            <a href="{{ route('admin.units.edit', $unit->id) }}" class="btn btn-primary btn-sm">
-                <i class="bi bi-pencil me-2"></i>Edit Unit
-            </a>
+            @can('unit.edit')
+                <a href="{{ route('admin.units.edit', $unit->id) }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-pencil me-2"></i>Edit Unit
+                </a>
+            @endcan
         </div>
     </div>
 @endsection

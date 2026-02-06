@@ -7,9 +7,11 @@
             <p class="text-muted mb-0">Manage product units and measurements</p>
         </div>
         <div>
-            <a href="{{ route('admin.units.create') }}" class="btn btn-primary btn-sm">
-                <i class="bi bi-plus-circle me-2"></i>Add Unit
-            </a>
+            @can('unit.create')
+                <a href="{{ route('admin.units.create') }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-circle me-2"></i>Add Unit
+                </a>
+            @endcan
         </div>
     </div>
 @endsection
@@ -88,7 +90,7 @@
                                                id="status-{{ $unit->id }}" 
                                                {{ $unit->status ? 'checked' : '' }}
                                                onchange="toggleUnitStatus({{ $unit->id }})"
-                                               disabled>
+                                               {{ auth()->user()->can('unit.edit') ? '' : 'disabled' }}>
                                         <label class="form-check-label" for="status-{{ $unit->id }}"></label>
                                     </div>
                                     <span class="badge {{ $unit->status ? 'bg-success' : 'bg-danger' }} text-white ms-2">
@@ -97,15 +99,24 @@
                                 </td>
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm" role="group">
-                                        <a href="{{ route('admin.units.show', $unit->id) }}" class="btn btn-outline-primary" title="View">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        <a href="{{ route('admin.units.edit', $unit->id) }}" class="btn btn-outline-secondary" title="Edit">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        <button type="button" class="btn btn-outline-danger" title="Delete" onclick="confirmDelete({{ $unit->id }}, '({{ $unit->name }}')">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
+                                        @can('unit.view')
+                                            <a href="{{ route('admin.units.show', $unit->id) }}" class="btn btn-outline-primary" title="View">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        @endcan
+                                        @can('unit.edit')
+                                            <a href="{{ route('admin.units.edit', $unit->id) }}" class="btn btn-outline-secondary" title="Edit">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        @endcan
+                                        @can('unit.delete')
+                                            <button type="button" class="btn btn-outline-danger" title="Delete"
+                                                    data-unit-id="{{ $unit->id }}"
+                                                    data-unit-name="{{ $unit->name }}"
+                                                    onclick="confirmDelete(this.dataset.unitId, this.dataset.unitName)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        @endcan
                                     </div>
                                 </td>
                             </tr>
@@ -118,9 +129,11 @@
                     <i class="bi bi-box fs-1 text-muted mb-3"></i>
                     <h5 class="text-muted">No units found</h5>
                     <p class="text-muted">Get started by creating your first unit.</p>
-                    <a href="{{ route('admin.units.create') }}" class="btn btn-primary">
-                        <i class="bi bi-plus-circle me-2"></i>Create First Unit
-                    </a>
+                    @can('unit.create')
+                        <a href="{{ route('admin.units.create') }}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>Create First Unit
+                        </a>
+                    @endcan
                 </div>
             @endif
         </div>
@@ -136,4 +149,73 @@
 @endsection
 
 @push('scripts')
+    <script>
+        function toggleUnitStatus(unitId) {
+            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const url = `{{ route("admin.units.toggle-status", 0) }}`.replace('/0/', '/' + unitId + '/');
+
+            fetch(url, {
+                    method: 'PATCH',
+                    headers: {
+                        'X-CSRF-TOKEN': token,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data || !data.success) return;
+
+                    const statusSwitch = document.querySelector('#status-' + unitId);
+                    const statusBadge = statusSwitch.closest('td').querySelector('.badge');
+
+                    if (data.status) {
+                        statusBadge.className = 'badge bg-success text-white ms-2';
+                        statusBadge.textContent = 'Active';
+                        statusSwitch.checked = true;
+                    } else {
+                        statusBadge.className = 'badge bg-danger text-white ms-2';
+                        statusBadge.textContent = 'Inactive';
+                        statusSwitch.checked = false;
+                    }
+
+                    showToast(data.message || 'Unit status updated.', 'success');
+                })
+                .catch(() => {
+                    showToast('Error updating status', 'error');
+                });
+        }
+
+        function confirmDelete(unitId, unitName) {
+            if (!confirm('Are you sure you want to delete ' + unitName + '?')) return;
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `{{ route("admin.units.destroy", 0) }}`.replace(/0$/, unitId);
+            form.innerHTML = '<input type="hidden" name="_token" value="' + document.querySelector(
+                    'meta[name="csrf-token"]').getAttribute('content') +
+                '"><input type="hidden" name="_method" value="DELETE">';
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function showToast(message, type) {
+            type = type || 'info';
+            if (type === 'error') type = 'danger';
+
+            const toastHtml = '<div class="toast align-items-center text-white bg-' + type + ' border-0" role="alert">' +
+                '<div class="d-flex">' +
+                '<div class="toast-body">' + message + '</div>' +
+                '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>' +
+                '</div>' +
+                '</div>';
+
+            const toastContainer = document.createElement('div');
+            toastContainer.innerHTML = toastHtml;
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            document.body.appendChild(toastContainer);
+
+            const toast = new bootstrap.Toast(toastContainer.querySelector('.toast'));
+            toast.show();
+        }
+    </script>
 @endpush

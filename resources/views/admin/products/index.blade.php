@@ -7,9 +7,11 @@
             <p class="text-muted mb-0">Manage your product inventory</p>
         </div>
         <div>
-            <a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-sm">
-                <i class="bi bi-plus-circle me-2"></i>Add Product
-            </a>
+            @can('product.create')
+                <a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-circle me-2"></i>Add Product
+                </a>
+            @endcan
         </div>
     </div>
 @endsection
@@ -155,24 +157,31 @@
                                                 <input class="form-check-input" type="checkbox"
                                                     id="status-{{ $product->id }}"
                                                     {{ $product->status ? 'checked' : '' }}
+                                                    {{ auth()->user()->can('product.edit') ? '' : 'disabled' }}
                                                     onchange="toggleProductStatus({{ $product->id }})">
                                                 <label class="form-check-label" for="status-{{ $product->id }}"></label>
                                             </div>
                                         </td>
                                         <td class="text-center">
                                             <div class="btn-group btn-group-sm" role="group">
-                                                <a href="{{ route('admin.products.show', $product->id) }}"
-                                                    class="btn btn-outline-primary" title="View">
-                                                    <i class="bi bi-eye"></i>
-                                                </a>
-                                                <a href="{{ route('admin.products.edit', $product->id) }}"
-                                                    class="btn btn-outline-secondary" title="Edit">
-                                                    <i class="bi bi-pencil"></i>
-                                                </a>
-                                                <button type="button" class="btn btn-outline-danger" title="Delete"
-                                                    onclick="confirmDelete({{ $product->id }}, '{{ $product->name }}')">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
+                                                @can('product.view')
+                                                    <a href="{{ route('admin.products.show', $product->id) }}"
+                                                        class="btn btn-outline-primary" title="View">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                @endcan
+                                                @can('product.edit')
+                                                    <a href="{{ route('admin.products.edit', $product->id) }}"
+                                                        class="btn btn-outline-secondary" title="Edit">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                @endcan
+                                                @can('product.delete')
+                                                    <button type="button" class="btn btn-outline-danger" title="Delete"
+                                                        onclick="confirmDelete({{ $product->id }}, '{{ $product->name }}')">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                @endcan
                                             </div>
                                         </td>
                                     </tr>
@@ -185,9 +194,11 @@
                         <i class="bi bi-box-seam fs-1 text-muted mb-3"></i>
                         <h5 class="text-muted">No products found</h5>
                         <p class="text-muted">Get started by creating your first product.</p>
-                        <a href="{{ route('admin.products.create') }}" class="btn btn-primary">
-                            <i class="bi bi-plus-circle me-2"></i>Create First Product
-                        </a>
+                        @can('product.create')
+                            <a href="{{ route('admin.products.create') }}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-2"></i>Create First Product
+                            </a>
+                        @endcan
                     </div>
                 @endif
             </div>

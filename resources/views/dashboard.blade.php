@@ -31,7 +31,7 @@
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                 Earnings (Monthly)
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">$40,000</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">${{ number_format((float) ($monthlyRevenue ?? 0), 2) }}</div>
                         </div>
                         <div class="col-auto">
                             <div class="stat-icon bg-primary text-white">
@@ -52,7 +52,7 @@
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                 Total Orders
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">1,245</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ number_format((int) ($totalOrders ?? 0)) }}</div>
                         </div>
                         <div class="col-auto">
                             <div class="stat-icon bg-success text-white">
@@ -73,7 +73,7 @@
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                                 Total Users
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">3,462</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ number_format((int) ($totalUsers ?? 0)) }}</div>
                         </div>
                         <div class="col-auto">
                             <div class="stat-icon bg-info text-white">
@@ -94,7 +94,7 @@
                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                 Total Products
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">856</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ number_format((int) ($totalProducts ?? 0)) }}</div>
                         </div>
                         <div class="col-auto">
                             <div class="stat-icon bg-warning text-white">
@@ -176,8 +176,8 @@
                     <h6 class="m-0 font-weight-bold text-primary">Card Example</h6>
                 </div>
                 <div class="card-body">
-                    <p>This is a simple example card with header and body.</p>
-                    <p class="mb-0 text-muted">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                    <p class="mb-2">Total categories: <span class="fw-semibold">{{ number_format((int) ($totalCategories ?? 0)) }}</span></p>
+                    <p class="mb-0 text-muted">Total revenue (completed): ${{ number_format((float) ($totalRevenue ?? 0), 2) }}</p>
                 </div>
             </div>
         </div>

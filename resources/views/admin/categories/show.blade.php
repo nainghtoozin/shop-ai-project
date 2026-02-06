@@ -10,9 +10,11 @@
             <a href="{{ route('admin.categories.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left me-2"></i>Back to Categories
             </a>
-            <a href="{{ route('admin.categories.edit', $category->id) }}" class="btn btn-primary btn-sm">
-                <i class="bi bi-pencil me-2"></i>Edit Category
-            </a>
+            @can('category.edit')
+                <a href="{{ route('admin.categories.edit', $category->id) }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-pencil me-2"></i>Edit Category
+                </a>
+            @endcan
         </div>
     </div>
 @endsection
@@ -121,7 +123,7 @@
                     <span class="badge bg-info text-white ms-2">{{ $category->children_count ?? 0 }}</span>
                 </div>
                 <div class="card-body">
-                    @if($category->children->exists())
+                    @if($category->children->isNotEmpty())
                         <div class="list-group list-group-flush">
                             @foreach($category->children as $child)
                                 <a href="{{ route('admin.categories.show', $child->id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
@@ -130,13 +132,12 @@
                                         @if($child->code)
                                             <span class="badge bg-secondary text-white ms-2">{{ $child->code }}</span>
                                         @endif
+                                        <small class="text-muted d-block">{{ $child->products_count ?? 0 }} products</small>
                                     </div>
-                                        <small class="text-muted">{{ $child->products_count ?? 0 }} products</small>
-                                </div>
-                                <div class="badge {{ $child->status ? 'bg-success' : 'bg-danger' }} text-white">
-                                    {{ $child->status ? 'Active' : 'Inactive' }}
-                                </div>
-                            </a>
+                                    <span class="badge {{ $child->status ? 'bg-success' : 'bg-danger' }} text-white">
+                                        {{ $child->status ? 'Active' : 'Inactive' }}
+                                    </span>
+                             </a>
                             @endforeach
                         </div>
                     @else

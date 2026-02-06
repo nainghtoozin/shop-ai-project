@@ -17,6 +17,9 @@ class CategoryController extends Controller
      */
     public function index(Request $request)
     {
+        $user = $request->user();
+        abort_if(!$user || !$user->can('category.view'), 403);
+
         $query = Category::with('parent');
         
         // Search functionality
@@ -45,6 +48,9 @@ class CategoryController extends Controller
      */
     public function create()
     {
+        $user = request()->user();
+        abort_if(!$user || !$user->can('category.create'), 403);
+
         $parentOptions = Category::getParentOptions();
         
         return view('admin.categories.create', compact('parentOptions'));
@@ -55,6 +61,9 @@ class CategoryController extends Controller
      */
     public function store(StoreCategoryRequest $request)
     {
+        $user = $request->user();
+        abort_if(!$user || !$user->can('category.create'), 403);
+
         $validated = $request->validated();
         
         // Handle image upload
@@ -81,7 +90,17 @@ class CategoryController extends Controller
      */
     public function show(Category $category)
     {
-        $category->load(['parent', 'children']);
+        $user = request()->user();
+        abort_if(!$user || !$user->can('category.view'), 403);
+
+        $category
+            ->load([
+                'parent',
+                'children' => function ($q) {
+                    $q->withCount('products');
+                },
+            ])
+            ->loadCount(['products', 'children']);
         
         return view('admin.categories.show', compact('category'));
     }
@@ -91,6 +110,9 @@ class CategoryController extends Controller
      */
     public function edit(Category $category)
     {
+        $user = request()->user();
+        abort_if(!$user || !$user->can('category.edit'), 403);
+
         $parentOptions = Category::getParentOptions($category->id);
         $imagePreview = $category->image ? $category->image_url : null;
         
@@ -102,6 +124,9 @@ class CategoryController extends Controller
      */
     public function update(UpdateCategoryRequest $request, Category $category)
     {
+        $user = $request->user();
+        abort_if(!$user || !$user->can('category.edit'), 403);
+
         $validated = $request->validated();
         
         // Handle image upload
@@ -133,6 +158,9 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category)
     {
+        $user = request()->user();
+        abort_if(!$user || !$user->can('category.delete'), 403);
+
         if ($category->children()->exists()) {
             return redirect()
                 ->route('admin.categories.index')
@@ -162,6 +190,9 @@ class CategoryController extends Controller
      */
     public function toggleStatus(Category $category)
     {
+        $user = request()->user();
+        abort_if(!$user || !$user->can('category.edit'), 403);
+
         $category->status = !$category->status;
         $category->save();
         
@@ -177,6 +208,9 @@ class CategoryController extends Controller
      */
     public function getSubcategories(Request $request)
     {
+        $user = $request->user();
+        abort_if(!$user || !$user->can('category.view'), 403);
+
         $parent = $request->get('parent_id');
         
         $subcategories = Category::where('parent_id', $parent)

@@ -3,10 +3,17 @@
 use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\SettingController as AdminSettingController;
+use App\Http\Controllers\Admin\RoleController as AdminRoleController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CategoryController as FrontCategoryController;
 use App\Http\Controllers\ProductController as FrontProductController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\MyOrdersController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,9 +39,19 @@ Route::post('/ajax/cart/update/{productId}', [CartController::class, 'update'])-
 Route::delete('/ajax/cart/remove/{productId}', [CartController::class, 'remove'])->name('ajax.cart.remove');
 Route::post('/ajax/cart/clear', [CartController::class, 'clear'])->name('ajax.cart.clear');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Checkout (session cart -> orders) - requires login
+Route::middleware('auth')->group(function () {
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+    Route::post('/checkout', [CheckoutController::class, 'placeOrder'])->name('checkout.place');
+    Route::get('/checkout/success/{order}', [CheckoutController::class, 'success'])->name('checkout.success');
+
+    // Order history
+    Route::get('/my-orders', [MyOrdersController::class, 'index'])->name('my-orders.index');
+});
+
+Route::get('/dashboard', DashboardController::class)
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::get('/test-chart', function () {
     return view('test-chart');
@@ -52,6 +69,19 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     Route::resource('products', ProductController::class);
     Route::patch('products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
     Route::patch('products/{product}/toggle-featured', [ProductController::class, 'toggleFeatured'])->name('products.toggle-featured');
+
+    // Order Routes
+    Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
+    Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
+    Route::put('orders/{order}', [AdminOrderController::class, 'update'])->name('orders.update');
+
+    // Settings (admin only)
+    Route::get('settings', [AdminSettingController::class, 'edit'])->name('settings.edit');
+    Route::post('settings', [AdminSettingController::class, 'update'])->name('settings.update');
+
+    // Users & Roles
+    Route::resource('users', AdminUserController::class)->except(['show']);
+    Route::resource('roles', AdminRoleController::class)->except(['show']);
 });
 
 Route::middleware('auth')->group(function () {

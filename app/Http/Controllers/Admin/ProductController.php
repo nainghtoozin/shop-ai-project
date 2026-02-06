@@ -48,6 +48,9 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
+        $user = $request->user();
+        abort_if(!$user || !$user->can('product.view'), 403);
+
         $query = Product::with(['category', 'unit', 'images']);
 
         // Search functionality
@@ -93,6 +96,9 @@ class ProductController extends Controller
      */
     public function create()
     {
+        $user = request()->user();
+        abort_if(!$user || !$user->can('product.create'), 403);
+
         $categories = Category::where('status', true)->orderBy('name')->pluck('name', 'id');
         $units = Unit::where('status', true)->orderBy('name')->pluck('name', 'id');
 
@@ -104,6 +110,9 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
+        $user = $request->user();
+        abort_if(!$user || !$user->can('product.create'), 403);
+
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
             'unit_id' => 'required|exists:units,id',
@@ -168,6 +177,9 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
+        $user = request()->user();
+        abort_if(!$user || !$user->can('product.view'), 403);
+
         $product->load(['category', 'unit', 'images' => function ($query) {
             $query->orderBy('sort_order');
         }]);
@@ -180,6 +192,9 @@ class ProductController extends Controller
      */
     public function edit(Product $product)
     {
+        $user = request()->user();
+        abort_if(!$user || !$user->can('product.edit'), 403);
+
         $product->load(['images' => function ($query) {
             $query->orderBy('sort_order');
         }]);
@@ -195,6 +210,9 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product)
     {
+        $user = $request->user();
+        abort_if(!$user || !$user->can('product.edit'), 403);
+
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
             'unit_id' => 'required|exists:units,id',
@@ -286,6 +304,9 @@ class ProductController extends Controller
      */
     public function destroy(Product $product)
     {
+        $user = request()->user();
+        abort_if(!$user || !$user->can('product.delete'), 403);
+
         try {
             DB::beginTransaction();
 
@@ -324,6 +345,9 @@ class ProductController extends Controller
      */
     public function toggleStatus(Product $product)
     {
+        $user = request()->user();
+        abort_if(!$user || !$user->can('product.edit'), 403);
+
         $product->update(['status' => !$product->status]);
 
         return back()
@@ -335,6 +359,9 @@ class ProductController extends Controller
      */
     public function toggleFeatured(Product $product)
     {
+        $user = request()->user();
+        abort_if(!$user || !$user->can('product.edit'), 403);
+
         $product->update(['featured' => !$product->featured]);
 
         return back()

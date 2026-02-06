@@ -7,9 +7,11 @@
             <p class="text-muted mb-0">Manage product categories and hierarchies</p>
         </div>
         <div>
-            <a href="{{ route('admin.categories.create') }}" class="btn btn-primary btn-sm">
-                <i class="bi bi-plus-circle me-2"></i>Add Category
-            </a>
+            @can('category.create')
+                <a href="{{ route('admin.categories.create') }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-circle me-2"></i>Add Category
+                </a>
+            @endcan
         </div>
     </div>
 @endsection
@@ -136,7 +138,8 @@
                                                 <input class="form-check-input" type="checkbox"
                                                     id="status-{{ $category->id }}"
                                                     {{ $category->status ? 'checked' : '' }}
-                                                    onchange="toggleCategoryStatus({{ $category->id }})" disabled>
+                                                    onchange="toggleCategoryStatus({{ $category->id }})"
+                                                    @cannot('category.edit') disabled @endcannot>
                                                 <label class="form-check-label" for="status-{{ $category->id }}"></label>
                                             </div>
                                             <span
@@ -146,18 +149,26 @@
                                         </td>
                                         <td class="text-center">
                                             <div class="btn-group btn-group-sm" role="group">
-                                                <a href="{{ route('admin.categories.show', $category->id) }}"
-                                                    class="btn btn-outline-primary" title="View">
-                                                    <i class="bi bi-eye"></i>
-                                                </a>
-                                                <a href="{{ route('admin.categories.edit', $category->id) }}"
-                                                    class="btn btn-outline-secondary" title="Edit">
-                                                    <i class="bi bi-pencil"></i>
-                                                </a>
-                                                <button type="button" class="btn btn-outline-danger" title="Delete"
-                                                    onclick="confirmDelete({{ $category->id }}, '{{ $category->name }}')">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
+                                                @can('category.view')
+                                                    <a href="{{ route('admin.categories.show', $category->id) }}"
+                                                        class="btn btn-outline-primary" title="View">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                @endcan
+                                                @can('category.edit')
+                                                    <a href="{{ route('admin.categories.edit', $category->id) }}"
+                                                        class="btn btn-outline-secondary" title="Edit">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                @endcan
+                                                  @can('category.delete')
+                                                      <button type="button" class="btn btn-outline-danger" title="Delete"
+                                                        data-category-id="{{ $category->id }}"
+                                                        data-category-name="{{ $category->name }}"
+                                                        onclick="confirmDelete(this.dataset.categoryId, this.dataset.categoryName)">
+                                                          <i class="bi bi-trash"></i>
+                                                      </button>
+                                                  @endcan
                                             </div>
                                         </td>
                                     </tr>
@@ -170,9 +181,11 @@
                         <i class="bi bi-folder fs-1 text-muted mb-3"></i>
                         <h5 class="text-muted">No categories found</h5>
                         <p class="text-muted">Get started by creating your first category.</p>
-                        <a href="{{ route('admin.categories.create') }}" class="btn btn-primary">
-                            <i class="bi bi-plus-circle me-2"></i>Create First Category
-                        </a>
+                        @can('category.create')
+                            <a href="{{ route('admin.categories.create') }}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-2"></i>Create First Category
+                            </a>
+                        @endcan
                     </div>
                 @endif
             </div>
@@ -191,10 +204,10 @@
     <script>
         function toggleCategoryStatus(categoryId) {
             const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            const url = '{{ route('admin.categories.toggle-status', ':id') }}'.replace(':id', categoryId);
+            const url = `{{ route("admin.categories.toggle-status", 0) }}`.replace('/0/', '/' + categoryId + '/');
 
             fetch(url, {
-                    method: 'POST',
+                    method: 'PATCH',
                     headers: {
                         'X-CSRF-TOKEN': token,
                         'Content-Type': 'application/json'
@@ -229,7 +242,7 @@
             if (confirm('Are you sure you want to delete ' + categoryName + '?')) {
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = '{{ route('admin.categories.destroy', ':id') }}'.replace(':id', categoryId);
+                form.action = `{{ route("admin.categories.destroy", 0) }}`.replace(/0$/, categoryId);
                 form.innerHTML = '<input type="hidden" name="_token" value="' + document.querySelector(
                         'meta[name="csrf-token"]').getAttribute('content') +
                     '"><input type="hidden" name="_method" value="DELETE">';
@@ -240,6 +253,7 @@
 
         function showToast(message, type) {
             type = type || 'info';
+            if (type === 'error') type = 'danger';
             const toastHtml = '<div class="toast align-items-center text-white bg-' + type + ' border-0" role="alert">' +
                 '<div class="d-flex">' +
                 '<div class="toast-body">' + message + '</div>' +

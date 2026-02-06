@@ -196,11 +196,11 @@
                                     <span class="h5 mb-0 text-primary fw-bold">$<span data-cart-total>{{ number_format($total, 2) }}</span></span>
                                 </div>
 
-                                <button class="btn btn-primary w-100" disabled>
-                                    <i class="bi bi-lock me-2"></i>Checkout (Coming Soon)
-                                </button>
+                                <a href="{{ route('checkout.index') }}" class="btn btn-primary w-100">
+                                    <i class="bi bi-lock me-2"></i>Proceed to Checkout
+                                </a>
                                 <small class="text-muted d-block mt-2">
-                                    Cart is session-based. Checkout will be added later.
+                                    You will be asked to login before checkout.
                                 </small>
                             </div>
                         </div>

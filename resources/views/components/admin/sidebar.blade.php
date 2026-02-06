@@ -14,76 +14,87 @@
     <!-- Navigation Menu -->
     <nav class="sidebar-menu">
         <!-- Dashboard -->
-        <div class="menu-item">
-            <a href="{{ route('dashboard') }}" class="menu-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                <i class="bi bi-speedometer2 menu-icon"></i>
-                <span class="menu-text">Dashboard</span>
-            </a>
-        </div>
+        @can('dashboard.view')
+            <div class="menu-item">
+                <a href="{{ route('dashboard') }}" class="menu-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                    <i class="bi bi-speedometer2 menu-icon"></i>
+                    <span class="menu-text">Dashboard</span>
+                </a>
+            </div>
+        @endcan
 
         <!-- Categories -->
-        <div class="menu-item">
-            <a href="{{ route('admin.categories.index') }}" class="menu-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
-                <i class="bi bi-tags menu-icon"></i>
-                <span class="menu-text">Categories</span>
-            </a>
-        </div>
+        @can('category.view')
+            <div class="menu-item">
+                <a href="{{ route('admin.categories.index') }}" class="menu-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
+                    <i class="bi bi-tags menu-icon"></i>
+                    <span class="menu-text">Categories</span>
+                </a>
+            </div>
+        @endcan
 
         <!-- Products -->
-        <div class="menu-item">
-            <a href="{{ route('admin.products.index') }}" class="menu-link {{ request()->routeIs('admin.products.*') ? 'active' : '' }}">
-                <i class="bi bi-box-seam menu-icon"></i>
-                <span class="menu-text">Products</span>
-            </a>
-        </div>
+        @can('product.view')
+            <div class="menu-item">
+                <a href="{{ route('admin.products.index') }}" class="menu-link {{ request()->routeIs('admin.products.*') ? 'active' : '' }}">
+                    <i class="bi bi-box-seam menu-icon"></i>
+                    <span class="menu-text">Products</span>
+                </a>
+            </div>
+        @endcan
 
         <!-- Units -->
-        <div class="menu-item">
-            <a href="{{ route('admin.units.index') }}" class="menu-link {{ request()->routeIs('admin.units.*') ? 'active' : '' }}">
-                <i class="bi bi-rulers menu-icon"></i>
-                <span class="menu-text">Units</span>
-            </a>
-        </div>
+        @can('unit.view')
+            <div class="menu-item">
+                <a href="{{ route('admin.units.index') }}" class="menu-link {{ request()->routeIs('admin.units.*') ? 'active' : '' }}">
+                    <i class="bi bi-rulers menu-icon"></i>
+                    <span class="menu-text">Units</span>
+                </a>
+            </div>
+        @endcan
 
         <!-- Users -->
-        <div class="menu-item">
-            <a href="#" class="menu-link">
-                <i class="bi bi-people menu-icon"></i>
-                <span class="menu-text">Users</span>
-            </a>
-        </div>
+        @can('user.view')
+            <div class="menu-item">
+                <a href="{{ route('admin.users.index') }}" class="menu-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                    <i class="bi bi-people menu-icon"></i>
+                    <span class="menu-text">Users</span>
+                </a>
+            </div>
+        @endcan
 
         <!-- Roles -->
-        <div class="menu-item">
-            <a href="#" class="menu-link">
-                <i class="bi bi-shield-check menu-icon"></i>
-                <span class="menu-text">Roles</span>
-            </a>
-        </div>
+        @can('role.view')
+            <div class="menu-item">
+                <a href="{{ route('admin.roles.index') }}" class="menu-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+                    <i class="bi bi-shield-check menu-icon"></i>
+                    <span class="menu-text">Roles</span>
+                </a>
+            </div>
+        @endcan
 
         <!-- Orders -->
-        <div class="menu-item">
-            <a href="#" class="menu-link">
-                <i class="bi bi-receipt menu-icon"></i>
-                <span class="menu-text">Orders</span>
-            </a>
-        </div>
+        @can('order.view.all')
+            <div class="menu-item">
+                <a href="{{ route('admin.orders.index') }}" class="menu-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
+                    <i class="bi bi-receipt menu-icon"></i>
+                    <span class="menu-text">Orders</span>
+                </a>
+            </div>
+        @endcan
 
-        <!-- Reports -->
-        <div class="menu-item">
-            <a href="#" class="menu-link">
-                <i class="bi bi-graph-up menu-icon"></i>
-                <span class="menu-text">Reports</span>
-            </a>
-        </div>
+        <!-- Reports (placeholder) -->
+        {{-- Add permissions + route later --}}
 
         <!-- Settings -->
-        <div class="menu-item">
-            <a href="#" class="menu-link">
-                <i class="bi bi-gear menu-icon"></i>
-                <span class="menu-text">Settings</span>
-            </a>
-        </div>
+        @can('setting.view')
+            <div class="menu-item">
+                <a href="{{ route('admin.settings.edit') }}" class="menu-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
+                    <i class="bi bi-gear menu-icon"></i>
+                    <span class="menu-text">Settings</span>
+                </a>
+            </div>
+        @endcan
 
         <!-- Divider -->
         <div class="px-3 py-2">
