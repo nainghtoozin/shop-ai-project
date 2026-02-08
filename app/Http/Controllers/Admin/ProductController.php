@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\Category;
+use App\Models\DeliveryCategory;
 use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -101,8 +102,9 @@ class ProductController extends Controller
 
         $categories = Category::where('status', true)->orderBy('name')->pluck('name', 'id');
         $units = Unit::where('status', true)->orderBy('name')->pluck('name', 'id');
+        $deliveryCategories = DeliveryCategory::query()->orderBy('name')->pluck('name', 'id');
 
-        return view('admin.products.create', compact('categories', 'units'));
+        return view('admin.products.create', compact('categories', 'units', 'deliveryCategories'));
     }
 
     /**
@@ -116,6 +118,7 @@ class ProductController extends Controller
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
             'unit_id' => 'required|exists:units,id',
+            'delivery_category_id' => 'nullable|exists:delivery_categories,id',
             'name' => 'required|string|max:255',
             'cost_price' => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',
@@ -201,8 +204,9 @@ class ProductController extends Controller
 
         $categories = Category::where('status', true)->orderBy('name')->pluck('name', 'id');
         $units = Unit::where('status', true)->orderBy('name')->pluck('name', 'id');
+        $deliveryCategories = DeliveryCategory::query()->orderBy('name')->pluck('name', 'id');
 
-        return view('admin.products.edit', compact('product', 'categories', 'units'));
+        return view('admin.products.edit', compact('product', 'categories', 'units', 'deliveryCategories'));
     }
 
     /**
@@ -216,6 +220,7 @@ class ProductController extends Controller
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
             'unit_id' => 'required|exists:units,id',
+            'delivery_category_id' => 'nullable|exists:delivery_categories,id',
             'name' => 'required|string|max:255',
             'cost_price' => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',

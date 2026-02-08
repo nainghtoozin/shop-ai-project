@@ -101,6 +101,27 @@
                     <span class="menu-text">Payment Methods</span>
                 </a>
             </div>
+
+            <div class="menu-item">
+                <a href="{{ route('admin.cities.index') }}" class="menu-link {{ request()->routeIs('admin.cities.*') ? 'active' : '' }}">
+                    <i class="bi bi-geo-alt menu-icon"></i>
+                    <span class="menu-text">Cities</span>
+                </a>
+            </div>
+
+            <div class="menu-item">
+                <a href="{{ route('admin.delivery-categories.index') }}" class="menu-link {{ request()->routeIs('admin.delivery-categories.*') ? 'active' : '' }}">
+                    <i class="bi bi-boxes menu-icon"></i>
+                    <span class="menu-text">Delivery Categories</span>
+                </a>
+            </div>
+
+            <div class="menu-item">
+                <a href="{{ route('admin.delivery-types.index') }}" class="menu-link {{ request()->routeIs('admin.delivery-types.*') ? 'active' : '' }}">
+                    <i class="bi bi-truck menu-icon"></i>
+                    <span class="menu-text">Delivery Types</span>
+                </a>
+            </div>
         @endcan
 
         <!-- Divider -->

@@ -5,8 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
 class Product extends Model
@@ -16,6 +16,7 @@ class Product extends Model
     protected $fillable = [
         'category_id',
         'unit_id',
+        'delivery_category_id',
         'name',
         'slug',
         'sku',
@@ -73,6 +74,11 @@ class Product extends Model
     public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class);
+    }
+
+    public function deliveryCategory(): BelongsTo
+    {
+        return $this->belongsTo(DeliveryCategory::class);
     }
 
     /**

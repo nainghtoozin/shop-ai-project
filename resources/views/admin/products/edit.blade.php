@@ -91,6 +91,22 @@
                                         @enderror
                                     </div>
                                 </div>
+
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="delivery_category_id" class="form-label">Delivery Category</label>
+                                        <select class="form-select @error('delivery_category_id') is-invalid @enderror" id="delivery_category_id"
+                                            name="delivery_category_id">
+                                            <option value="">Select Delivery Category (optional)</option>
+                                            @foreach ($deliveryCategories as $id => $name)
+                                                <option value="{{ $id }}" {{ old('delivery_category_id', $product->delivery_category_id) == $id ? 'selected' : '' }}>{{ $name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('delivery_category_id')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
                                 <div class="col-12">
                                     <div class="mb-3">
                                         <label for="description" class="form-label">Description</label>

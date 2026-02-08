@@ -111,6 +111,41 @@
                             <div class="card border-0 shadow-sm mb-4">
                                 <div class="card-body">
                                     <h5 class="fw-bold mb-3">Shipping Address</h5>
+
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">City <span class="text-danger">*</span></label>
+                                            <select name="city_id" id="city_id" class="form-select" required {{ ($cities ?? collect())->isEmpty() ? 'disabled' : '' }}>
+                                                <option value="">Select City</option>
+                                                @foreach (($cities ?? collect()) as $c)
+                                                    <option value="{{ $c->id }}" data-base-charge="{{ $c->base_charge }}" {{ old('city_id') == $c->id ? 'selected' : '' }}>
+                                                        {{ $c->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            @if (($cities ?? collect())->isEmpty())
+                                                <div class="form-text text-danger">No active cities available. Please contact support.</div>
+                                            @endif
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Delivery Type <span class="text-danger">*</span></label>
+                                            <select name="delivery_type_id" id="delivery_type_id" class="form-select" required {{ ($deliveryTypes ?? collect())->isEmpty() ? 'disabled' : '' }}>
+                                                <option value="">Select Delivery Type</option>
+                                                @foreach (($deliveryTypes ?? collect()) as $dt)
+                                                    <option value="{{ $dt->id }}" data-charge-type="{{ $dt->charge_type }}" data-extra-charge="{{ $dt->extra_charge }}" {{ old('delivery_type_id') == $dt->id ? 'selected' : '' }}>
+                                                        {{ $dt->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            @if (($deliveryTypes ?? collect())->isEmpty())
+                                                <div class="form-text text-danger">No active delivery types available. Please contact support.</div>
+                                            @endif
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="form-text" id="shippingQuoteHelp">Select city and delivery type to calculate shipping.</div>
+                                        </div>
+                                    </div>
+
                                     <textarea name="shipping_address" class="form-control" rows="4" required>{{ old('shipping_address') }}</textarea>
 
                                     <div class="mt-3">
@@ -198,6 +233,8 @@
                                 <div class="card-body">
                                     <h5 class="fw-bold mb-3">Order Summary</h5>
 
+                                    <div id="js-order-base" data-base-total="{{ number_format(($subtotal + $tax) - $discount, 2, '.', '') }}" class="d-none"></div>
+
                                     <div class="d-flex justify-content-between mb-2">
                                         <span class="text-muted">Subtotal</span>
                                         <span>${{ number_format($subtotal, 2) }}</span>
@@ -208,7 +245,7 @@
                                     </div>
                                     <div class="d-flex justify-content-between mb-2">
                                         <span class="text-muted">Shipping</span>
-                                        <span>${{ number_format($shippingCost, 2) }}</span>
+                                        <span>$<span id="js-shipping-cost">{{ number_format($shippingCost, 2) }}</span></span>
                                     </div>
                                     <div class="d-flex justify-content-between mb-3">
                                         <span class="text-muted">Discount</span>
@@ -219,10 +256,10 @@
 
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <span class="fw-bold">Total</span>
-                                        <span class="h4 mb-0 text-primary fw-bold">${{ number_format($total, 2) }}</span>
+                                        <span class="h4 mb-0 text-primary fw-bold">$<span id="js-grand-total">{{ number_format($total, 2) }}</span></span>
                                     </div>
 
-                                    <button type="submit" class="btn btn-primary w-100 btn-lg" {{ ($paymentMethods ?? collect())->isEmpty() ? 'disabled' : '' }}>
+                                    <button type="submit" id="placeOrderBtn" class="btn btn-primary w-100 btn-lg" {{ ($paymentMethods ?? collect())->isEmpty() ? 'disabled' : '' }}>
                                         <i class="bi bi-check2-circle me-2"></i>Place Order
                                     </button>
 
@@ -250,6 +287,19 @@
         const req = document.getElementById('paymentProofRequired');
         const help = document.getElementById('paymentMethodHelp');
 
+        const city = document.getElementById('city_id');
+        const deliveryType = document.getElementById('delivery_type_id');
+        const shippingHelp = document.getElementById('shippingQuoteHelp');
+        const shippingEl = document.getElementById('js-shipping-cost');
+        const grandTotalEl = document.getElementById('js-grand-total');
+        const baseEl = document.getElementById('js-order-base');
+        const placeBtn = document.getElementById('placeOrderBtn');
+
+        const formatMoney = (n) => {
+            const v = Number(n || 0);
+            return v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+
         const getSelected = () => {
             const opt = method?.options?.[method.selectedIndex];
             if (!opt) return null;
@@ -276,6 +326,73 @@
 
         if (method) method.addEventListener('change', sync);
         sync();
+
+        async function fetchShippingQuote() {
+            const cityId = city?.value;
+            const dtId = deliveryType?.value;
+
+            if (!cityId || !dtId) {
+                if (shippingHelp) shippingHelp.textContent = 'Select city and delivery type to calculate shipping.';
+                if (shippingEl) shippingEl.textContent = formatMoney(0);
+
+                const baseTotal = Number(baseEl?.dataset?.baseTotal || 0);
+                if (grandTotalEl) grandTotalEl.textContent = formatMoney(baseTotal);
+                if (placeBtn && !placeBtn.hasAttribute('data-payment-disabled')) placeBtn.disabled = true;
+                return;
+            }
+
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const url = `{{ route('checkout.shipping-quote') }}`;
+
+            if (shippingHelp) shippingHelp.textContent = 'Calculating shipping...';
+
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': token,
+                    },
+                    body: JSON.stringify({ city_id: cityId, delivery_type_id: dtId }),
+                });
+
+                const data = await res.json();
+                if (!res.ok || !data.ok) {
+                    throw new Error(data?.message || 'Could not calculate shipping.');
+                }
+
+                const shipping = Number(data.shipping_cost || 0);
+                const baseTotal = Number(baseEl?.dataset?.baseTotal || 0);
+                const grand = baseTotal + shipping;
+
+                if (shippingEl) shippingEl.textContent = formatMoney(shipping);
+                if (grandTotalEl) grandTotalEl.textContent = formatMoney(grand);
+
+                if (shippingHelp) {
+                    const b = data.breakdown || {};
+                    const detail = `Base: $${formatMoney(b.city_base)} | Items: $${formatMoney(b.product_extra)} | ${b.delivery_type || 'Delivery'}: $${formatMoney(b.delivery_extra)}`;
+                    shippingHelp.textContent = detail;
+                }
+
+                // Allow submit (other validation may still block)
+                if (placeBtn && !placeBtn.hasAttribute('data-payment-disabled')) {
+                    placeBtn.disabled = false;
+                }
+            } catch (e) {
+                if (shippingHelp) shippingHelp.textContent = e.message || 'Could not calculate shipping.';
+                if (placeBtn) placeBtn.disabled = true;
+            }
+        }
+
+        // If payment methods are missing we keep the existing disabled state.
+        if (placeBtn && placeBtn.disabled) {
+            placeBtn.setAttribute('data-payment-disabled', '1');
+        }
+
+        if (city) city.addEventListener('change', fetchShippingQuote);
+        if (deliveryType) deliveryType.addEventListener('change', fetchShippingQuote);
+        fetchShippingQuote();
     });
 </script>
 

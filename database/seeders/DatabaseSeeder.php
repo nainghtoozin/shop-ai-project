@@ -33,6 +33,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UnitSeeder::class,
             CategorySeeder::class,
+            CitySeeder::class,
+            DeliveryCategorySeeder::class,
+            DeliveryTypeSeeder::class,
         ]);
 
         // Create 30 products with images

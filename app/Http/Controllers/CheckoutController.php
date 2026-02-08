@@ -6,6 +6,9 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
+use App\Models\City;
+use App\Models\DeliveryType;
+use App\Models\DeliveryCategory;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -39,7 +42,74 @@ class CheckoutController extends Controller
             ->orderBy('name')
             ->get(['id', 'type', 'name', 'account_number', 'description']);
 
-        return view('checkout.index', compact('items', 'subtotal', 'tax', 'shippingCost', 'discount', 'total', 'paymentMethods'));
+        $cities = City::query()
+            ->active()
+            ->orderBy('name')
+            ->get(['id', 'name', 'base_charge']);
+
+        $deliveryTypes = DeliveryType::query()
+            ->active()
+            ->orderBy('name')
+            ->get(['id', 'name', 'charge_type', 'extra_charge', 'description']);
+
+        return view('checkout.index', compact('items', 'subtotal', 'tax', 'shippingCost', 'discount', 'total', 'paymentMethods', 'cities', 'deliveryTypes'));
+    }
+
+    public function shippingQuote(Request $request)
+    {
+        if (!Auth::check()) {
+            return response()->json(['ok' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+
+        $validated = $request->validate([
+            'city_id' => ['required', 'integer'],
+            'delivery_type_id' => ['required', 'integer'],
+        ]);
+
+        $city = City::query()->active()->find((int) $validated['city_id']);
+        $deliveryType = DeliveryType::query()->active()->find((int) $validated['delivery_type_id']);
+
+        if (!$city || !$deliveryType) {
+            return response()->json(['ok' => false, 'message' => 'Invalid shipping selection.'], 422);
+        }
+
+        $cart = session()->get('cart', []);
+        if (empty($cart)) {
+            return response()->json(['ok' => false, 'message' => 'Cart is empty.'], 422);
+        }
+
+        $items = collect($cart)->map(function ($item, $key) {
+            return [
+                'product_id' => (int) ($item['product_id'] ?? $key),
+                'quantity' => (int) ($item['quantity'] ?? 0),
+            ];
+        })->filter(fn ($i) => $i['product_id'] > 0 && $i['quantity'] > 0)->values();
+
+        if ($items->isEmpty()) {
+            return response()->json(['ok' => false, 'message' => 'Cart is empty.'], 422);
+        }
+
+        $productIds = $items->pluck('product_id')->all();
+
+        $products = Product::query()
+            ->whereIn('id', $productIds)
+            ->with(['deliveryCategory:id,name,extra_charge'])
+            ->get(['id', 'delivery_category_id']);
+
+        $productExtra = 0.0;
+        foreach ($items as $i) {
+            $p = $products->firstWhere('id', $i['product_id']);
+            $extra = (float) ($p?->deliveryCategory?->extra_charge ?? 0);
+            $productExtra += $extra * (int) $i['quantity'];
+        }
+
+        $quote = $this->calculateShipping($city, $deliveryType, $productExtra);
+
+        return response()->json([
+            'ok' => true,
+            'shipping_cost' => $quote['shipping_cost'],
+            'breakdown' => $quote['breakdown'],
+        ]);
     }
 
     public function placeOrder(Request $request)
@@ -61,6 +131,8 @@ class CheckoutController extends Controller
             'billing_address' => 'nullable|string|max:2000',
             'note' => 'nullable|string|max:2000',
             'payment_method_id' => ['required', 'integer'],
+            'city_id' => ['required', 'integer'],
+            'delivery_type_id' => ['required', 'integer'],
         ]);
 
         $paymentMethod = PaymentMethod::query()
@@ -86,6 +158,14 @@ class CheckoutController extends Controller
             ],
         ]);
 
+        $city = City::query()->active()->find((int) $validated['city_id']);
+        $deliveryType = DeliveryType::query()->active()->find((int) $validated['delivery_type_id']);
+        if (!$city || !$deliveryType) {
+            throw ValidationException::withMessages([
+                'city_id' => 'Selected city is not available.',
+            ]);
+        }
+
         $items = collect($cart)->map(function ($item, $key) {
             return [
                 'product_id' => (int) ($item['product_id'] ?? $key),
@@ -102,7 +182,7 @@ class CheckoutController extends Controller
 
         $subtotal = round($items->sum(fn ($i) => $i['price'] * $i['quantity']), 2);
         $tax = 0.00;
-        $shippingCost = 0.00;
+        $shippingCost = 0.00; // calculated inside transaction from locked products
         $discount = 0.00;
         $total = round(($subtotal + $tax + $shippingCost) - $discount, 2);
 
@@ -113,13 +193,13 @@ class CheckoutController extends Controller
         }
 
         try {
-            $order = DB::transaction(function () use ($validated, $paymentMethod, $items, $subtotal, $tax, $shippingCost, $discount, $total, $paymentProofPath) {
+            $order = DB::transaction(function () use ($validated, $paymentMethod, $city, $deliveryType, $items, $subtotal, $tax, $discount, $paymentProofPath) {
             $productIds = $items->pluck('product_id')->all();
 
             $products = Product::query()
                 ->whereIn('id', $productIds)
                 ->lockForUpdate()
-                ->get(['id', 'name', 'sku', 'selling_price', 'stock', 'status', 'not_for_sale']);
+                ->get(['id', 'name', 'sku', 'selling_price', 'stock', 'status', 'not_for_sale', 'delivery_category_id']);
 
             if ($products->count() !== count($productIds)) {
                 throw ValidationException::withMessages([
@@ -128,6 +208,25 @@ class CheckoutController extends Controller
             }
 
             $orderNumber = $this->generateOrderNumber();
+
+            $categoryIds = $products->pluck('delivery_category_id')->filter()->unique()->values()->all();
+            $categories = DeliveryCategory::query()
+                ->whereIn('id', $categoryIds)
+                ->get(['id', 'extra_charge'])
+                ->keyBy('id');
+
+            $productExtra = 0.0;
+            foreach ($items as $item) {
+                $p = $products->firstWhere('id', $item['product_id']);
+                if (!$p) continue;
+                $extra = (float) ($categories[$p->delivery_category_id]->extra_charge ?? 0);
+                $productExtra += $extra * (int) $item['quantity'];
+            }
+
+            $quote = $this->calculateShipping($city, $deliveryType, $productExtra);
+            $shippingCost = (float) $quote['shipping_cost'];
+
+            $total = round(($subtotal + $tax + $shippingCost) - $discount, 2);
 
             $order = Order::create([
                 'user_id' => Auth::id(),
@@ -141,6 +240,8 @@ class CheckoutController extends Controller
                 'customer_name' => $validated['customer_name'],
                 'customer_phone' => $validated['customer_phone'],
                 'customer_email' => $validated['customer_email'] ?? null,
+                'city_name' => $city->name,
+                'delivery_type' => $deliveryType->name,
                 'shipping_address' => $validated['shipping_address'],
                 'billing_address' => $validated['billing_address'] ?? null,
                 'note' => $validated['note'] ?? null,
@@ -229,5 +330,32 @@ class CheckoutController extends Controller
 
         // fallback
         return $prefix . '-' . strtoupper(Str::random(10));
+    }
+
+    private function calculateShipping(City $city, DeliveryType $deliveryType, float $productExtra): array
+    {
+        $base = (float) $city->base_charge;
+        $productExtra = max(0.0, (float) $productExtra);
+
+        $basePlusProduct = round($base + $productExtra, 2);
+
+        $deliveryExtra = 0.0;
+        if ($deliveryType->charge_type === 'percent') {
+            $deliveryExtra = round($basePlusProduct * ((float) $deliveryType->extra_charge) / 100, 2);
+        } else {
+            $deliveryExtra = (float) $deliveryType->extra_charge;
+        }
+
+        $shipping = round($basePlusProduct + $deliveryExtra, 2);
+
+        return [
+            'shipping_cost' => $shipping,
+            'breakdown' => [
+                'city_base' => round($base, 2),
+                'product_extra' => round($productExtra, 2),
+                'delivery_type' => $deliveryType->name,
+                'delivery_extra' => round($deliveryExtra, 2),
+            ],
+        ];
     }
 }

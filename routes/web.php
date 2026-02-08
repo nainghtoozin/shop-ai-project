@@ -6,6 +6,9 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\PaymentMethodController as AdminPaymentMethodController;
+use App\Http\Controllers\Admin\CityController as AdminCityController;
+use App\Http\Controllers\Admin\DeliveryCategoryController as AdminDeliveryCategoryController;
+use App\Http\Controllers\Admin\DeliveryTypeController as AdminDeliveryTypeController;
 use App\Http\Controllers\Admin\RoleController as AdminRoleController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\HomeController;
@@ -44,6 +47,7 @@ Route::post('/ajax/cart/clear', [CartController::class, 'clear'])->name('ajax.ca
 Route::middleware('auth')->group(function () {
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'placeOrder'])->name('checkout.place');
+    Route::post('/checkout/shipping-quote', [CheckoutController::class, 'shippingQuote'])->name('checkout.shipping-quote');
     Route::get('/checkout/success/{order}', [CheckoutController::class, 'success'])->name('checkout.success');
 
     // Order history
@@ -84,6 +88,15 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     Route::resource('payment-methods', AdminPaymentMethodController::class)->except(['show']);
     Route::patch('payment-methods/{payment_method}/toggle-status', [AdminPaymentMethodController::class, 'toggleStatus'])
         ->name('payment-methods.toggle-status');
+
+    // Shipping config
+    Route::resource('cities', AdminCityController::class)->except(['show']);
+    Route::patch('cities/{city}/toggle-status', [AdminCityController::class, 'toggleStatus'])->name('cities.toggle-status');
+
+    Route::resource('delivery-categories', AdminDeliveryCategoryController::class)->except(['show']);
+
+    Route::resource('delivery-types', AdminDeliveryTypeController::class)->except(['show']);
+    Route::patch('delivery-types/{delivery_type}/toggle-status', [AdminDeliveryTypeController::class, 'toggleStatus'])->name('delivery-types.toggle-status');
 
     // Users & Roles
     Route::resource('users', AdminUserController::class)->except(['show']);
