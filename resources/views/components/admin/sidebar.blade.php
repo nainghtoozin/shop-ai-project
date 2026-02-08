@@ -103,6 +103,13 @@
             </div>
 
             <div class="menu-item">
+                <a href="{{ route('admin.hero-sliders.index') }}" class="menu-link {{ request()->routeIs('admin.hero-sliders.*') ? 'active' : '' }}">
+                    <i class="bi bi-images menu-icon"></i>
+                    <span class="menu-text">Hero Slider</span>
+                </a>
+            </div>
+
+            <div class="menu-item">
                 <a href="{{ route('admin.cities.index') }}" class="menu-link {{ request()->routeIs('admin.cities.*') ? 'active' : '' }}">
                     <i class="bi bi-geo-alt menu-icon"></i>
                     <span class="menu-text">Cities</span>

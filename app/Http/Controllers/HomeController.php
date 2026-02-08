@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\HeroSlider;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
@@ -13,6 +14,12 @@ class HomeController extends Controller
      */
     public function __invoke(Request $request)
     {
+        $heroSliders = HeroSlider::query()
+            ->active()
+            ->orderBy('sort_order')
+            ->orderByDesc('id')
+            ->get(['id', 'title', 'subtitle', 'image', 'link', 'badge_text', 'sort_order']);
+
         $categories = Category::query()
             ->where('status', true)
             ->orderBy('name')
@@ -31,6 +38,6 @@ class HomeController extends Controller
             ->take(12)
             ->get(['id', 'category_id', 'unit_id', 'name', 'slug', 'selling_price', 'stock', 'alert_stock', 'description', 'featured', 'created_at']);
 
-        return view('welcome', compact('categories', 'products'));
+        return view('welcome', compact('heroSliders', 'categories', 'products'));
     }
 }

@@ -130,37 +130,89 @@
         @endif
     </div>
 
-    <!-- Hero Section -->
+    <!-- Hero Section (Dynamic Carousel) -->
     <section class="bg-gradient bg-primary text-white py-5 mb-5">
         <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-6">
-                    <div class="text-center text-lg-start">
-                        <h1 class="display-4 fw-bold mb-4">
-                            Welcome to {{ setting('site_name', config('app.name', 'Shop')) }}
-                        </h1>
-                        <p class="lead mb-4">
-                            Discover amazing products and enjoy a seamless shopping experience.
-                            Quality items, competitive prices, and fast delivery.
-                        </p>
-                        <div
-                            class="d-flex flex-column flex-sm-row gap-3 justify-content-center justify-content-lg-start">
-                            <a href="{{ route('products.index') }}" class="btn btn-light btn-lg text-primary">
-                                <i class="bi bi-bag me-2"></i> Start Shopping
-                            </a>
-                            <a href="#" class="btn btn-outline-light btn-lg">
-                                <i class="bi bi-play-circle me-2"></i> Watch Demo
-                            </a>
-                        </div>
+            @if (!empty($heroSliders) && $heroSliders->count() > 0)
+                <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="6000">
+                    <div class="carousel-indicators">
+                        @foreach ($heroSliders as $i => $slide)
+                            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ $i }}"
+                                class="{{ $i === 0 ? 'active' : '' }}" aria-current="{{ $i === 0 ? 'true' : 'false' }}"
+                                aria-label="Slide {{ $i + 1 }}"></button>
+                        @endforeach
+                    </div>
+
+                    <div class="carousel-inner rounded shadow-lg overflow-hidden">
+                        @foreach ($heroSliders as $i => $slide)
+                            <div class="carousel-item {{ $i === 0 ? 'active' : '' }}">
+                                @php($slideUrl = $slide->link)
+                                @php($slideTitle = $slide->title ?: setting('site_name', config('app.name', 'Shop')))
+                                @php($slideSubtitle = $slide->subtitle)
+
+                                @if ($slideUrl)
+                                    <a href="{{ $slideUrl }}" target="_blank" rel="noopener" class="d-block text-decoration-none">
+                                @endif
+
+                                <div class="position-relative">
+                                    <img src="{{ asset('storage/' . $slide->image) }}" class="d-block w-100" alt="{{ $slideTitle }}" style="height: 420px; object-fit: cover;">
+                                    <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(90deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.15) 60%, rgba(0,0,0,0) 100%);"></div>
+
+                                    <div class="carousel-caption text-start" style="left: 8%; right: 8%; bottom: 2.25rem;">
+                                        @if ($slide->badge_text)
+                                            <div class="mb-2">
+                                                <span class="badge bg-warning text-dark">{{ $slide->badge_text }}</span>
+                                            </div>
+                                        @endif
+
+                                        @if ($slideTitle)
+                                            <h1 class="display-5 fw-bold mb-3">{{ $slideTitle }}</h1>
+                                        @endif
+
+                                        @if ($slideSubtitle)
+                                            <p class="lead mb-0" style="max-width: 50rem;">{{ $slideSubtitle }}</p>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                @if ($slideUrl)
+                                    </a>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                </div>
+
+                <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center justify-content-lg-start mt-4">
+                    <a href="{{ route('products.index') }}" class="btn btn-light btn-lg text-primary">
+                        <i class="bi bi-bag me-2"></i> Start Shopping
+                    </a>
+                    <a href="{{ route('categories.index') }}" class="btn btn-outline-light btn-lg">
+                        <i class="bi bi-tag me-2"></i> Browse Categories
+                    </a>
+                </div>
+            @else
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h1 class="display-5 fw-bold mb-3">{{ setting('site_name', config('app.name', 'Shop')) }}</h1>
+                        <p class="lead mb-0">{{ setting('footer_text', 'Welcome.') }}</p>
+                    </div>
+                    <div class="col-lg-4 mt-3 mt-lg-0 text-lg-end">
+                        <a href="{{ route('products.index') }}" class="btn btn-light btn-lg text-primary">
+                            <i class="bi bi-bag me-2"></i> Start Shopping
+                        </a>
                     </div>
                 </div>
-                <div class="col-lg-6 mt-4 mt-lg-0">
-                    <div class="text-center">
-                        <img src="https://img.freepik.com/premium-photo/sign-that-says-welcome-shop-is-gray-background_1126821-26929.jpg?semt=ais_hybrid&w=740&q=80"
-                            alt="Shopping Experience" class="img-fluid rounded shadow-lg" style="max-width: 400px;">
-                    </div>
-                </div>
-            </div>
+            @endif
         </div>
     </section>
 
@@ -367,10 +419,15 @@
                         </div>
                     @endif
                     <div class="d-flex gap-3">
-                        <a href="{{ setting('facebook_url', '#') }}" class="text-muted" target="_blank" rel="noopener"><i class="bi bi-facebook fs-5"></i></a>
-                        <a href="{{ setting('twitter_url', '#') }}" class="text-muted" target="_blank" rel="noopener"><i class="bi bi-twitter fs-5"></i></a>
-                        <a href="{{ setting('instagram_url', '#') }}" class="text-muted" target="_blank" rel="noopener"><i class="bi bi-instagram fs-5"></i></a>
-                        <a href="#" class="text-muted"><i class="bi bi-linkedin fs-5"></i></a>
+                        @if (setting('facebook_url'))
+                            <a href="{{ setting('facebook_url') }}" class="text-muted" target="_blank" rel="noopener"><i class="bi bi-facebook fs-5"></i></a>
+                        @endif
+                        @if (setting('twitter_url'))
+                            <a href="{{ setting('twitter_url') }}" class="text-muted" target="_blank" rel="noopener"><i class="bi bi-twitter fs-5"></i></a>
+                        @endif
+                        @if (setting('instagram_url'))
+                            <a href="{{ setting('instagram_url') }}" class="text-muted" target="_blank" rel="noopener"><i class="bi bi-instagram fs-5"></i></a>
+                        @endif
                     </div>
                 </div>
 

@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\PaymentMethodController as AdminPaymentMethodCont
 use App\Http\Controllers\Admin\CityController as AdminCityController;
 use App\Http\Controllers\Admin\DeliveryCategoryController as AdminDeliveryCategoryController;
 use App\Http\Controllers\Admin\DeliveryTypeController as AdminDeliveryTypeController;
+use App\Http\Controllers\Admin\HeroSliderController as AdminHeroSliderController;
 use App\Http\Controllers\Admin\RoleController as AdminRoleController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\HomeController;
@@ -97,6 +98,10 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
 
     Route::resource('delivery-types', AdminDeliveryTypeController::class)->except(['show']);
     Route::patch('delivery-types/{delivery_type}/toggle-status', [AdminDeliveryTypeController::class, 'toggleStatus'])->name('delivery-types.toggle-status');
+
+    // Hero slider (homepage)
+    Route::resource('hero-sliders', AdminHeroSliderController::class)->except(['show']);
+    Route::patch('hero-sliders/{hero_slider}/toggle-status', [AdminHeroSliderController::class, 'toggleStatus'])->name('hero-sliders.toggle-status');
 
     // Users & Roles
     Route::resource('users', AdminUserController::class)->except(['show']);
