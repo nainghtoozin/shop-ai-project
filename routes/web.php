@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
+use App\Http\Controllers\Admin\PaymentMethodController as AdminPaymentMethodController;
 use App\Http\Controllers\Admin\RoleController as AdminRoleController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\HomeController;
@@ -78,6 +79,11 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     // Settings (admin only)
     Route::get('settings', [AdminSettingController::class, 'edit'])->name('settings.edit');
     Route::post('settings', [AdminSettingController::class, 'update'])->name('settings.update');
+
+    // Payment Methods (under settings)
+    Route::resource('payment-methods', AdminPaymentMethodController::class)->except(['show']);
+    Route::patch('payment-methods/{payment_method}/toggle-status', [AdminPaymentMethodController::class, 'toggleStatus'])
+        ->name('payment-methods.toggle-status');
 
     // Users & Roles
     Route::resource('users', AdminUserController::class)->except(['show']);

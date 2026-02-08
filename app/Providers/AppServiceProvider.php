@@ -16,7 +16,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Global helpers
+        require_once app_path('Support/helpers.php');
     }
 
     /**
@@ -29,7 +30,7 @@ class AppServiceProvider extends ServiceProvider
         // Share settings globally (cached)
         try {
             if (Schema::hasTable('settings')) {
-                View::share('settings', Setting::allCached());
+                View::share('settings', setting());
             } else {
                 View::share('settings', []);
             }

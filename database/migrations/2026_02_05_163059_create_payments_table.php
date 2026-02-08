@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Defensive: some environments may already have the table (manual import).
+        if (Schema::hasTable('payments')) {
+            return;
+        }
+
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
 

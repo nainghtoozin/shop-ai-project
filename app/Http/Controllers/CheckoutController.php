@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Models\PaymentMethod;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +34,12 @@ class CheckoutController extends Controller
         $discount = 0.00;
         $total = round(($subtotal + $tax + $shippingCost) - $discount, 2);
 
-        return view('checkout.index', compact('items', 'subtotal', 'tax', 'shippingCost', 'discount', 'total'));
+        $paymentMethods = PaymentMethod::query()
+            ->active()
+            ->orderBy('name')
+            ->get(['id', 'type', 'name', 'account_number', 'description']);
+
+        return view('checkout.index', compact('items', 'subtotal', 'tax', 'shippingCost', 'discount', 'total', 'paymentMethods'));
     }
 
     public function placeOrder(Request $request)
@@ -54,8 +60,30 @@ class CheckoutController extends Controller
             'shipping_address' => 'required|string|max:2000',
             'billing_address' => 'nullable|string|max:2000',
             'note' => 'nullable|string|max:2000',
-            'payment_method' => ['required', Rule::in(['COD', 'KBZPay', 'WavePay', 'Bank Transfer'])],
-            'payment_proof' => ['nullable', 'required_unless:payment_method,COD', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'payment_method_id' => ['required', 'integer'],
+        ]);
+
+        $paymentMethod = PaymentMethod::query()
+            ->whereKey((int) $validated['payment_method_id'])
+            ->where('is_active', true)
+            ->first();
+
+        if (!$paymentMethod) {
+            throw ValidationException::withMessages([
+                'payment_method_id' => 'Selected payment method is not available.',
+            ]);
+        }
+
+        $isCod = strtoupper((string) $paymentMethod->type) === 'COD';
+
+        $request->validate([
+            'payment_proof' => [
+                Rule::requiredIf(!$isCod),
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:4096',
+            ],
         ]);
 
         $items = collect($cart)->map(function ($item, $key) {
@@ -85,7 +113,7 @@ class CheckoutController extends Controller
         }
 
         try {
-            $order = DB::transaction(function () use ($validated, $items, $subtotal, $tax, $shippingCost, $discount, $total, $paymentProofPath) {
+            $order = DB::transaction(function () use ($validated, $paymentMethod, $items, $subtotal, $tax, $shippingCost, $discount, $total, $paymentProofPath) {
             $productIds = $items->pluck('product_id')->all();
 
             $products = Product::query()
@@ -151,8 +179,13 @@ class CheckoutController extends Controller
 
             Payment::create([
                 'order_id' => $order->id,
-                'payment_method' => $validated['payment_method'],
+                // Backward-compatible column (used in existing admin views)
+                'payment_method' => $paymentMethod->name,
                 'payment_proof' => $paymentProofPath,
+                // Snapshots (do not rely on future edits to payment methods)
+                'payment_method_name' => $paymentMethod->name,
+                'payment_type' => $paymentMethod->type,
+                'account_number' => $paymentMethod->account_number,
                 'payment_status' => 'pending',
                 'amount' => $total,
                 'transaction_id' => null,

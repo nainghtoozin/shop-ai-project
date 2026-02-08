@@ -5,7 +5,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'Shop') }} - Modern E-Commerce Platform</title>
+    <title>{{ setting('site_name', config('app.name', 'Shop')) }} - Modern E-Commerce Platform</title>
+
+    @php($favicon = setting('site_favicon'))
+    @if ($favicon && \Illuminate\Support\Facades\Storage::disk('public')->exists($favicon))
+        <link rel="icon" href="{{ asset('storage/' . $favicon) }}">
+    @endif
 
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -19,7 +24,13 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
         <div class="container">
             <a class="navbar-brand fw-bold" href="{{ route('home') }}">
-                <i class="bi bi-shop me-2"></i>{{ config('app.name', 'Shop') }}
+                @php($logo = setting('site_logo'))
+                @if ($logo && \Illuminate\Support\Facades\Storage::disk('public')->exists($logo))
+                    <img src="{{ asset('storage/' . $logo) }}" alt="{{ setting('site_name', config('app.name', 'Shop')) }}" style="height: 28px; width: auto;" class="me-2">
+                @else
+                    <i class="bi bi-shop me-2"></i>
+                @endif
+                {{ setting('site_name', config('app.name', 'Shop')) }}
             </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -126,7 +137,7 @@
                 <div class="col-lg-6">
                     <div class="text-center text-lg-start">
                         <h1 class="display-4 fw-bold mb-4">
-                            Welcome to {{ config('app.name', 'Shop') }}
+                            Welcome to {{ setting('site_name', config('app.name', 'Shop')) }}
                         </h1>
                         <p class="lead mb-4">
                             Discover amazing products and enjoy a seamless shopping experience.
@@ -337,14 +348,28 @@
         <div class="container">
             <div class="row g-4">
                 <div class="col-lg-4">
-                    <h5 class="mb-3">{{ config('app.name', 'Shop') }}</h5>
-                    <p class="text-muted">
-                        Your trusted online shopping destination for quality products and great deals.
-                    </p>
+                    <h5 class="mb-3">{{ setting('site_name', config('app.name', 'Shop')) }}</h5>
+                    <p class="text-muted">{{ setting('footer_text', 'Your trusted online shopping destination for quality products and great deals.') }}</p>
+                    @php($contactEmail = setting('contact_email'))
+                    @php($contactPhone = setting('contact_phone'))
+                    @php($address = setting('address'))
+                    @if ($contactEmail || $contactPhone || $address)
+                        <div class="small text-muted">
+                            @if ($contactEmail)
+                                <div>Email: <a class="text-muted" href="mailto:{{ $contactEmail }}">{{ $contactEmail }}</a></div>
+                            @endif
+                            @if ($contactPhone)
+                                <div>Phone: <a class="text-muted" href="tel:{{ preg_replace('/\s+/', '', $contactPhone) }}">{{ $contactPhone }}</a></div>
+                            @endif
+                            @if ($address)
+                                <div>Address: {{ $address }}</div>
+                            @endif
+                        </div>
+                    @endif
                     <div class="d-flex gap-3">
-                        <a href="#" class="text-muted"><i class="bi bi-facebook fs-5"></i></a>
-                        <a href="#" class="text-muted"><i class="bi bi-twitter fs-5"></i></a>
-                        <a href="#" class="text-muted"><i class="bi bi-instagram fs-5"></i></a>
+                        <a href="{{ setting('facebook_url', '#') }}" class="text-muted" target="_blank" rel="noopener"><i class="bi bi-facebook fs-5"></i></a>
+                        <a href="{{ setting('twitter_url', '#') }}" class="text-muted" target="_blank" rel="noopener"><i class="bi bi-twitter fs-5"></i></a>
+                        <a href="{{ setting('instagram_url', '#') }}" class="text-muted" target="_blank" rel="noopener"><i class="bi bi-instagram fs-5"></i></a>
                         <a href="#" class="text-muted"><i class="bi bi-linkedin fs-5"></i></a>
                     </div>
                 </div>
@@ -401,7 +426,7 @@
 
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <p class="mb-0 text-muted">&copy; {{ date('Y') }} {{ config('app.name', 'Shop') }}. All
+                    <p class="mb-0 text-muted">&copy; {{ date('Y') }} {{ setting('site_name', config('app.name', 'Shop')) }}. All
                         rights reserved.</p>
                 </div>
                 <div class="col-md-6 text-md-end">

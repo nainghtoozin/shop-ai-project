@@ -24,36 +24,36 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Create test user
-        // User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        User::factory()->create([
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+        ]);
 
-        // Run seeders in correct order
-        // $this->call([
-        //     UnitSeeder::class,
-        //     CategorySeeder::class,
-        // ]);
+        //Run seeders in correct order
+        $this->call([
+            UnitSeeder::class,
+            CategorySeeder::class,
+        ]);
 
-        // // Create 30 products with images
-        // Product::factory(30)->create()->each(function ($product) {
-        //     // Create 1-3 images for each product
-        //     $imageCount = fake()->numberBetween(1, 3);
+        // Create 30 products with images
+        Product::factory(30)->create()->each(function ($product) {
+            // Create 1-3 images for each product
+            $imageCount = fake()->numberBetween(1, 3);
 
-        //     ProductImage::factory($imageCount)
-        //         ->forProduct($product)
-        //         ->create()
-        //         ->each(function ($image, $index) use ($product) {
-        //             // Set first image as primary
-        //             if ($index === 0) {
-        //                 $image->is_primary = true;
-        //                 $image->save();
-        //             }
+            ProductImage::factory($imageCount)
+                ->forProduct($product)
+                ->create()
+                ->each(function ($image, $index) use ($product) {
+                    // Set first image as primary
+                    if ($index === 0) {
+                        $image->is_primary = true;
+                        $image->save();
+                    }
 
-        //             // Set sort order
-        //             $image->sort_order = $index + 1;
-        //             $image->save();
-        //         });
-        // });
+                    // Set sort order
+                    $image->sort_order = $index + 1;
+                    $image->save();
+                });
+        });
     }
 }

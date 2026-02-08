@@ -94,15 +94,15 @@
                                     <div class="row g-3">
                                         <div class="col-md-6">
                                             <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                                            <input type="text" name="customer_name" class="form-control" value="{{ old('customer_name') }}" required>
+                                            <input type="text" name="customer_name" class="form-control" value="{{ old('customer_name', auth()->user()->name ?? '') }}" required>
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label">Phone <span class="text-danger">*</span></label>
-                                            <input type="text" name="customer_phone" class="form-control" value="{{ old('customer_phone') }}" required>
+                                            <input type="text" name="customer_phone" class="form-control" value="{{ old('customer_phone', auth()->user()->phone ?? '') }}" required>
                                         </div>
                                         <div class="col-12">
                                             <label class="form-label">Email</label>
-                                            <input type="email" name="customer_email" class="form-control" value="{{ old('customer_email') }}" placeholder="optional">
+                                            <input type="email" name="customer_email" class="form-control" value="{{ old('customer_email', auth()->user()->email ?? '') }}" placeholder="optional">
                                         </div>
                                     </div>
                                 </div>
@@ -132,19 +132,30 @@
 
                                     <div class="mb-3">
                                         <label class="form-label">Payment Method <span class="text-danger">*</span></label>
-                                        <select name="payment_method" id="payment_method" class="form-select" required>
-                                            <option value="COD" {{ old('payment_method', 'COD') === 'COD' ? 'selected' : '' }}>COD</option>
-                                            <option value="KBZPay" {{ old('payment_method') === 'KBZPay' ? 'selected' : '' }}>KBZPay</option>
-                                            <option value="WavePay" {{ old('payment_method') === 'WavePay' ? 'selected' : '' }}>WavePay</option>
-                                            <option value="Bank Transfer" {{ old('payment_method') === 'Bank Transfer' ? 'selected' : '' }}>Bank Transfer</option>
+                                        <select name="payment_method_id" id="payment_method" class="form-select" required {{ ($paymentMethods ?? collect())->isEmpty() ? 'disabled' : '' }}>
+                                            @php($oldPm = old('payment_method_id'))
+                                            @foreach (($paymentMethods ?? collect()) as $pm)
+                                                <option value="{{ $pm->id }}"
+                                                    data-type="{{ $pm->type }}"
+                                                    data-account="{{ $pm->account_number }}"
+                                                    data-description="{{ $pm->description }}"
+                                                    {{ (string) $oldPm === (string) $pm->id ? 'selected' : '' }}>
+                                                    {{ $pm->name }}
+                                                </option>
+                                            @endforeach
+
+                                            @if (($paymentMethods ?? collect())->isEmpty())
+                                                <option value="" selected>No payment methods available</option>
+                                            @endif
                                         </select>
-                                        <div class="form-text">Select COD or an online payment method.</div>
+
+                                        <div class="form-text" id="paymentMethodHelp">Select a payment method to continue.</div>
                                     </div>
 
                                     <div class="mb-0" id="paymentProofWrap">
                                         <label class="form-label">Payment Proof <span class="text-danger" id="paymentProofRequired">*</span></label>
                                         <input type="file" name="payment_proof" id="payment_proof" class="form-control" accept="image/png,image/jpeg,image/webp">
-                                        <div class="form-text">Required for KBZPay/WavePay/Bank Transfer. Max 4MB.</div>
+                                        <div class="form-text">Required for non-COD methods. Max 4MB.</div>
                                     </div>
                                 </div>
                             </div>
@@ -211,7 +222,7 @@
                                         <span class="h4 mb-0 text-primary fw-bold">${{ number_format($total, 2) }}</span>
                                     </div>
 
-                                    <button type="submit" class="btn btn-primary w-100 btn-lg">
+                                    <button type="submit" class="btn btn-primary w-100 btn-lg" {{ ($paymentMethods ?? collect())->isEmpty() ? 'disabled' : '' }}>
                                         <i class="bi bi-check2-circle me-2"></i>Place Order
                                     </button>
 
@@ -237,11 +248,30 @@
         const method = document.getElementById('payment_method');
         const proof = document.getElementById('payment_proof');
         const req = document.getElementById('paymentProofRequired');
+        const help = document.getElementById('paymentMethodHelp');
+
+        const getSelected = () => {
+            const opt = method?.options?.[method.selectedIndex];
+            if (!opt) return null;
+            return {
+                type: (opt.dataset.type || '').toString(),
+                account: (opt.dataset.account || '').toString(),
+                description: (opt.dataset.description || '').toString(),
+            };
+        };
 
         const sync = () => {
-            const isCOD = (method?.value || 'COD') === 'COD';
+            const sel = getSelected();
+            const isCOD = (sel?.type || '').trim().toUpperCase() === 'COD';
             if (proof) proof.required = !isCOD;
             if (req) req.classList.toggle('d-none', isCOD);
+
+            if (help && sel) {
+                let text = sel.type ? ('Type: ' + sel.type) : '';
+                if (sel.account) text += (text ? ' | ' : '') + ('Account: ' + sel.account);
+                if (sel.description) text += (text ? ' | ' : '') + sel.description;
+                help.textContent = text || 'Select a payment method to continue.';
+            }
         };
 
         if (method) method.addEventListener('change', sync);

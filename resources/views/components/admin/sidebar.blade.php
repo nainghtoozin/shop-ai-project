@@ -94,6 +94,13 @@
                     <span class="menu-text">Settings</span>
                 </a>
             </div>
+
+            <div class="menu-item">
+                <a href="{{ route('admin.payment-methods.index') }}" class="menu-link {{ request()->routeIs('admin.payment-methods.*') ? 'active' : '' }}">
+                    <i class="bi bi-credit-card-2-front menu-icon"></i>
+                    <span class="menu-text">Payment Methods</span>
+                </a>
+            </div>
         @endcan
 
         <!-- Divider -->
