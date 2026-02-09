@@ -82,8 +82,13 @@
         <div class="container">
             <div class="d-flex justify-content-between align-items-end mb-4">
                 <div>
-                    <h1 class="display-6 fw-bold mb-1">Products</h1>
-                    <p class="text-muted mb-0">Browse all available products</p>
+                    @if (!empty($searchQuery))
+                        <h1 class="display-6 fw-bold mb-1">Search Results</h1>
+                        <p class="text-muted mb-0">Search results for: <span class="fw-semibold">{{ $searchQuery }}</span></p>
+                    @else
+                        <h1 class="display-6 fw-bold mb-1">Products</h1>
+                        <p class="text-muted mb-0">Browse all available products</p>
+                    @endif
                 </div>
                 <div class="text-muted small">{{ $products->total() }} items</div>
             </div>
@@ -133,8 +138,13 @@
             @else
                 <div class="text-center py-5">
                     <i class="bi bi-box-seam fs-1 text-muted mb-3"></i>
-                    <h5 class="text-muted">No products available</h5>
-                    <p class="text-muted">Please check back later.</p>
+                    @if (!empty($searchQuery))
+                        <h5 class="text-muted">No results found</h5>
+                        <p class="text-muted mb-0">We couldn't find any products matching <span class="fw-semibold">{{ $searchQuery }}</span>.</p>
+                    @else
+                        <h5 class="text-muted">No products available</h5>
+                        <p class="text-muted">Please check back later.</p>
+                    @endif
                 </div>
             @endif
         </div>

@@ -233,6 +233,9 @@ class ProductController extends Controller
             'new_images' => 'nullable|array',
             'new_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
             'primary_image' => 'nullable|integer',
+            'images_to_delete' => 'nullable|array',
+            'images_to_delete.*' => 'integer',
+            // Backward compatibility
             'delete_images' => 'nullable|array',
             'delete_images.*' => 'integer',
         ]);
@@ -245,10 +248,19 @@ class ProductController extends Controller
 
             $product->update($validated);
 
-            // Delete selected images
-            if ($request->filled('delete_images')) {
-                $imagesToDelete = ProductImage::whereIn('id', $request->delete_images)
+            // Delete selected images (delete record + storage file via ProductImage::delete override)
+            $deleteIds = collect($request->input('images_to_delete', []))
+                ->merge($request->input('delete_images', []))
+                ->filter(fn ($v) => is_numeric($v))
+                ->map(fn ($v) => (int) $v)
+                ->unique()
+                ->values()
+                ->all();
+
+            if (!empty($deleteIds)) {
+                $imagesToDelete = ProductImage::query()
                     ->where('product_id', $product->id)
+                    ->whereIn('id', $deleteIds)
                     ->get();
 
                 foreach ($imagesToDelete as $image) {

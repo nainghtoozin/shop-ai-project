@@ -29,6 +29,37 @@ class ProductController extends Controller
         return view('products.index', compact('products'));
     }
 
+    public function search(Request $request)
+    {
+        $q = trim((string) $request->get('q', ''));
+
+        if ($q === '') {
+            return redirect()->route('products.index');
+        }
+
+        $products = Product::query()
+            ->with([
+                'category:id,name,slug',
+                'unit:id,name,short_name',
+                'primaryImage:id,product_id,image,is_primary,sort_order',
+            ])
+            ->where('status', true)
+            ->where('not_for_sale', false)
+            ->where(function ($query) use ($q) {
+                $query->where('name', 'like', "%{$q}%")
+                    ->orWhere('sku', 'like', "%{$q}%");
+            })
+            ->orderBy('featured', 'desc')
+            ->latest()
+            ->paginate(12)
+            ->withQueryString();
+
+        return view('products.index', [
+            'products' => $products,
+            'searchQuery' => $q,
+        ]);
+    }
+
     /**
      * Show the form for creating a new resource.
      */

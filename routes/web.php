@@ -28,6 +28,9 @@ Route::get('/', HomeController::class)->name('home');
 Route::get('/products', [FrontProductController::class, 'index'])->name('products.index');
 Route::get('/products/{product:slug}', [FrontProductController::class, 'show'])->name('products.show');
 
+// Search
+Route::get('/search', [FrontProductController::class, 'search'])->name('search');
+
 Route::get('/categories', [FrontCategoryController::class, 'index'])->name('categories.index');
 Route::get('/category/{category:slug}', [FrontCategoryController::class, 'show'])->name('category.show');
 

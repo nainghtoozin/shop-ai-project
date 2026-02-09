@@ -203,10 +203,11 @@
                                 <div class="col-12">
                                     <div class="mb-3">
                                         <label class="form-label">Current Images</label>
+                                        <div id="imagesToDelete"></div>
                                         <div class="row g-3" id="existingImages">
                                             @foreach ($product->images as $index => $image)
                                                 <div class="col-md-3">
-                                                    <div class="card position-relative">
+                                                    <div class="card position-relative" data-image-card>
                                                         <img src="{{ $image->image_url }}" class="card-img-top"
                                                             style="height: 200px; object-fit: cover;">
                                                         <div class="card-body p-2">
@@ -221,16 +222,12 @@
                                                                     Primary
                                                                 </label>
                                                             </div>
-                                                            <div class="form-check">
-                                                                <input class="form-check-input" type="checkbox"
-                                                                    name="delete_images[]"
-                                                                    id="delete_image_{{ $image->id }}"
-                                                                    value="{{ $image->id }}">
-                                                                <label class="form-check-label text-danger"
-                                                                    for="delete_image_{{ $image->id }}">
-                                                                    Delete
-                                                                </label>
-                                                            </div>
+                                                            <button type="button"
+                                                                class="btn btn-sm btn-outline-danger w-100 mt-2"
+                                                                data-remove-image
+                                                                data-image-id="{{ $image->id }}">
+                                                                <i class="bi bi-x-circle me-1"></i>Remove Image
+                                                            </button>
                                                         </div>
                                                         @if ($image->is_primary)
                                                             <span class="position-absolute top-0 start-0 m-2">
@@ -387,17 +384,55 @@
         // Calculate initial margin on page load
         calculateMargin();
 
-        // Handle image delete confirmation
-        document.querySelectorAll('input[name="delete_images[]"]').forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                if (this.checked) {
-                    const imageName = this.closest('.card').querySelector('img').src.split('/').pop();
-                    if (!confirm(
-                            `Are you sure you want to delete this image? This action cannot be undone.`)) {
-                        this.checked = false;
-                    }
-                }
-            });
+        // Mark images for deletion (no DB change until Update)
+        const deletedImageIds = new Set();
+        const deleteContainer = document.getElementById('imagesToDelete');
+
+        function ensurePrimarySelected() {
+            const radios = document.querySelectorAll('input[name="primary_image"]');
+            if (!radios.length) return;
+
+            const checked = Array.from(radios).some(r => r.checked);
+            if (checked) return;
+
+            // Select the first remaining image as primary.
+            radios[0].checked = true;
+        }
+
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-remove-image]');
+            if (!btn) return;
+
+            e.preventDefault();
+
+            const imageId = String(btn.dataset.imageId || '').trim();
+            if (!imageId || deletedImageIds.has(imageId)) return;
+
+            const card = btn.closest('[data-image-card]');
+            if (!card) return;
+
+            // Track deletion in hidden inputs
+            if (deleteContainer) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'images_to_delete[]';
+                input.value = imageId;
+                deleteContainer.appendChild(input);
+            }
+            deletedImageIds.add(imageId);
+
+            // If removed image was selected as primary, auto-select another.
+            const wasPrimarySelected = !!card.querySelector('input[name="primary_image"]:checked');
+
+            // Subtle UI removal (fade out then remove from DOM)
+            card.style.transition = 'opacity 160ms ease, transform 160ms ease';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.98)';
+
+            setTimeout(() => {
+                card.closest('.col-md-3')?.remove();
+                if (wasPrimarySelected) ensurePrimarySelected();
+            }, 170);
         });
     </script>
 @endpush

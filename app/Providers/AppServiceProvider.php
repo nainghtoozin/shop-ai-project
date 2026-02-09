@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Setting;
+use App\Models\PaymentMethod;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Blade;
@@ -36,6 +37,20 @@ class AppServiceProvider extends ServiceProvider
             }
         } catch (\Throwable $e) {
             View::share('settings', []);
+        }
+
+        // Share footer payment methods globally (no cache -> immediate updates)
+        try {
+            if (Schema::hasTable('payment_methods')) {
+                View::share(
+                    'footerPaymentMethods',
+                    PaymentMethod::query()->active()->orderBy('name')->get(['id', 'type', 'name'])
+                );
+            } else {
+                View::share('footerPaymentMethods', collect());
+            }
+        } catch (\Throwable $e) {
+            View::share('footerPaymentMethods', collect());
         }
         // Component aliases are not needed since we're using @include directly
         // Blade::component('admin-layout', 'layouts.admin');

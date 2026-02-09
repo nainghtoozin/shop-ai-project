@@ -57,12 +57,12 @@
                 </ul>
 
                 <div class="d-flex align-items-center">
-                    <div class="input-group me-2" style="max-width: 300px;">
-                        <input class="form-control" type="search" placeholder="Search products..." aria-label="Search">
-                        <button class="btn btn-outline-light" type="submit">
+                    <form action="{{ route('search') }}" method="GET" class="input-group me-2" style="max-width: 320px;">
+                        <input class="form-control" type="search" name="q" value="{{ request('q') }}" placeholder="Search products or SKU..." aria-label="Search" autocomplete="off">
+                        <button class="btn btn-outline-light" type="submit" aria-label="Search">
                             <i class="bi bi-search"></i>
                         </button>
-                    </div>
+                    </form>
 
                     <a href="{{ route('cart.index') }}" class="btn btn-outline-light position-relative me-2" aria-label="Cart">
                         <i class="bi bi-cart3"></i>
@@ -396,99 +396,168 @@
     </section>
 
     <!-- Footer -->
-    <footer class="bg-dark text-white py-5">
-        <div class="container">
-            <div class="row g-4">
-                <div class="col-lg-4">
-                    <h5 class="mb-3">{{ setting('site_name', config('app.name', 'Shop')) }}</h5>
-                    <p class="text-muted">{{ setting('footer_text', 'Your trusted online shopping destination for quality products and great deals.') }}</p>
-                    @php($contactEmail = setting('contact_email'))
-                    @php($contactPhone = setting('contact_phone'))
-                    @php($address = setting('address'))
-                    @if ($contactEmail || $contactPhone || $address)
-                        <div class="small text-muted">
-                            @if ($contactEmail)
-                                <div>Email: <a class="text-muted" href="mailto:{{ $contactEmail }}">{{ $contactEmail }}</a></div>
-                            @endif
-                            @if ($contactPhone)
-                                <div>Phone: <a class="text-muted" href="tel:{{ preg_replace('/\s+/', '', $contactPhone) }}">{{ $contactPhone }}</a></div>
-                            @endif
-                            @if ($address)
-                                <div>Address: {{ $address }}</div>
-                            @endif
+    <footer class="footer-ecom text-white">
+        @php($contactEmail = setting('contact_email'))
+        @php($contactPhone = setting('contact_phone'))
+        @php($address = setting('address'))
+        @php($facebook = setting('facebook_url'))
+        @php($instagram = setting('instagram_url'))
+        @php($telegram = setting('telegram_url'))
+        @php($footerLogo = setting('site_logo'))
+
+        <div class="footer-ecom__top py-5">
+            <div class="container">
+                <div class="row gy-5 gx-4">
+                    <!-- Brand + Social -->
+                    <div class="col-lg-4">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="footer-ecom__mark">
+                                @if ($footerLogo && \Illuminate\Support\Facades\Storage::disk('public')->exists($footerLogo))
+                                    <img src="{{ asset('storage/' . $footerLogo) }}" alt="{{ setting('site_name', config('app.name', 'Shop')) }}" class="footer-ecom__logo">
+                                @else
+                                    <div class="footer-ecom__logo-fallback">
+                                        <i class="bi bi-shop"></i>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <div class="footer-ecom__brand fw-bold">{{ setting('site_name', config('app.name', 'Shop')) }}</div>
+                                    <span class="badge rounded-pill footer-ecom__pill">Online Store</span>
+                                </div>
+                                <p class="footer-ecom__desc text-white-50 mb-0">
+                                    {{ setting('footer_text', 'Your trusted online shopping destination for quality products and great deals.') }}
+                                </p>
+
+                                <div class="mt-4">
+                                    <div class="text-uppercase text-white-50 small fw-semibold mb-2">Social</div>
+                                    <div class="d-flex gap-2">
+                                        @php($social = [
+                                            ['label' => 'Facebook', 'url' => $facebook, 'icon' => 'bi-facebook'],
+                                            ['label' => 'Instagram', 'url' => $instagram, 'icon' => 'bi-instagram'],
+                                            ['label' => 'Telegram', 'url' => $telegram, 'icon' => 'bi-telegram'],
+                                        ])
+                                        @foreach ($social as $s)
+                                            @if (!empty($s['url']))
+                                                <a href="{{ $s['url'] }}" target="_blank" rel="noopener"
+                                                    class="footer-ecom__social" aria-label="{{ $s['label'] }}">
+                                                    <i class="bi {{ $s['icon'] }}"></i>
+                                                </a>
+                                            @else
+                                                <span class="footer-ecom__social footer-ecom__social--disabled"
+                                                    aria-label="{{ $s['label'] }} (not configured)" title="{{ $s['label'] }} not configured">
+                                                    <i class="bi {{ $s['icon'] }}"></i>
+                                                </span>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    @endif
-                    <div class="d-flex gap-3">
-                        @if (setting('facebook_url'))
-                            <a href="{{ setting('facebook_url') }}" class="text-muted" target="_blank" rel="noopener"><i class="bi bi-facebook fs-5"></i></a>
-                        @endif
-                        @if (setting('twitter_url'))
-                            <a href="{{ setting('twitter_url') }}" class="text-muted" target="_blank" rel="noopener"><i class="bi bi-twitter fs-5"></i></a>
-                        @endif
-                        @if (setting('instagram_url'))
-                            <a href="{{ setting('instagram_url') }}" class="text-muted" target="_blank" rel="noopener"><i class="bi bi-instagram fs-5"></i></a>
-                        @endif
                     </div>
-                </div>
 
-                <div class="col-lg-2 col-md-6">
-                    <h6 class="mb-3">Quick Links</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">About Us</a>
-                        </li>
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Contact</a></li>
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">FAQs</a></li>
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Terms &
-                                Conditions</a></li>
-                    </ul>
-                </div>
-
-                <div class="col-lg-2 col-md-6">
-                    <h6 class="mb-3">Categories</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Electronics</a>
-                        </li>
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Fashion</a></li>
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Home &
-                                Garden</a></li>
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Sports</a></li>
-                    </ul>
-                </div>
-
-                <div class="col-lg-2 col-md-6">
-                    <h6 class="mb-3">Customer Service</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Shipping
-                                Info</a></li>
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Returns</a></li>
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Track Order</a>
-                        </li>
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Support</a></li>
-                    </ul>
-                </div>
-
-                <div class="col-lg-2 col-md-6">
-                    <h6 class="mb-3">Payment Methods</h6>
-                    <div class="d-flex gap-2 mb-3">
-                        <i class="bi bi-credit-card fs-4 text-muted"></i>
-                        <i class="bi bi-paypal fs-4 text-muted"></i>
-                        <i class="bi bi-apple fs-4 text-muted"></i>
-                        <i class="bi bi-google fs-4 text-muted"></i>
+                    <!-- Shop Links -->
+                    <div class="col-6 col-lg-2">
+                        <div class="text-uppercase text-white-50 small fw-semibold mb-3">Shop</div>
+                        <ul class="list-unstyled mb-0 footer-ecom__links">
+                            <li><a href="{{ route('home') }}">Home</a></li>
+                            <li><a href="{{ route('products.index') }}">Products</a></li>
+                            <li><a href="{{ route('categories.index') }}">Categories</a></li>
+                            <li><a href="{{ route('cart.index') }}">Cart</a></li>
+                        </ul>
                     </div>
-                    <p class="small text-muted">Secure payment options available</p>
+
+                    <!-- Account Links -->
+                    <div class="col-6 col-lg-2">
+                        <div class="text-uppercase text-white-50 small fw-semibold mb-3">Account</div>
+                        <ul class="list-unstyled mb-0 footer-ecom__links">
+                            @guest
+                                <li><a href="{{ route('login') }}">Login</a></li>
+                                <li><a href="{{ route('register') }}">Register</a></li>
+                            @else
+                                <li><a href="{{ route('my-orders.index') }}">My Orders</a></li>
+                                <li><a href="{{ route('profile.edit') }}">Profile</a></li>
+                                <li><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                            @endguest
+                        </ul>
+                    </div>
+
+                    <!-- Contact + Payments -->
+                    <div class="col-lg-4">
+                        <div class="row gy-4">
+                            <div class="col-12">
+                                <div class="text-uppercase text-white-50 small fw-semibold mb-3">Contact</div>
+                                @if ($contactEmail || $contactPhone || $address)
+                                    <div class="footer-ecom__contact text-white-50 small">
+                                        @if ($address)
+                                            <div class="footer-ecom__contact-row">
+                                                <i class="bi bi-geo-alt"></i>
+                                                <span>{{ $address }}</span>
+                                            </div>
+                                        @endif
+                                        @if ($contactPhone)
+                                            <div class="footer-ecom__contact-row">
+                                                <i class="bi bi-telephone"></i>
+                                                <a href="tel:{{ preg_replace('/\s+/', '', $contactPhone) }}" class="text-white-50 text-decoration-none">{{ $contactPhone }}</a>
+                                            </div>
+                                        @endif
+                                        @if ($contactEmail)
+                                            <div class="footer-ecom__contact-row">
+                                                <i class="bi bi-envelope"></i>
+                                                <a href="mailto:{{ $contactEmail }}" class="text-white-50 text-decoration-none">{{ $contactEmail }}</a>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @else
+                                    <div class="text-white-50 small">Contact details are not configured yet.</div>
+                                @endif
+                            </div>
+
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div class="text-uppercase text-white-50 small fw-semibold">Accepted Payments</div>
+                                    <a href="{{ route('checkout.index') }}" class="footer-ecom__micro-link text-white-50 small text-decoration-none">
+                                        Checkout <i class="bi bi-arrow-right ms-1"></i>
+                                    </a>
+                                </div>
+
+                                @if (!empty($footerPaymentMethods) && $footerPaymentMethods->count() > 0)
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach ($footerPaymentMethods as $pm)
+                                            @php($t = strtolower((string) ($pm->type ?? '')))
+                                            @php($pmIcon = str_contains($t, 'cod') ? 'bi-cash-coin' : (str_contains($t, 'bank') ? 'bi-bank' : (str_contains($t, 'wallet') ? 'bi-phone' : 'bi-credit-card')))
+                                            <span class="footer-ecom__pay-pill" title="{{ $pm->type ?: '' }}">
+                                                <i class="bi {{ $pmIcon }}"></i>
+                                                <span>{{ $pm->name }}</span>
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <span class="footer-ecom__pay-pill footer-ecom__pay-pill--placeholder"><i class="bi bi-cash-coin"></i><span>Cash</span></span>
+                                        <span class="footer-ecom__pay-pill footer-ecom__pay-pill--placeholder"><i class="bi bi-bank"></i><span>Bank Transfer</span></span>
+                                        <span class="footer-ecom__pay-pill footer-ecom__pay-pill--placeholder"><i class="bi bi-phone"></i><span>Mobile Wallet</span></span>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <hr class="my-4 border-secondary">
-
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <p class="mb-0 text-muted">&copy; {{ date('Y') }} {{ setting('site_name', config('app.name', 'Shop')) }}. All
-                        rights reserved.</p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <a href="#" class="text-muted text-decoration-none me-3">Privacy Policy</a>
-                    <a href="#" class="text-muted text-decoration-none">Terms of Service</a>
+        <div class="footer-ecom__bottom py-3">
+            <div class="container">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+                    <div class="text-white-50 small">
+                        &copy; {{ date('Y') }} {{ setting('site_name', config('app.name', 'Shop')) }}. All rights reserved.
+                    </div>
+                    <div class="text-white-50 small">
+                        <span class="me-3"><i class="bi bi-shield-lock me-1"></i>Secure payment</span>
+                        <span class="me-3"><i class="bi bi-truck me-1"></i>Fast delivery</span>
+                        <span><i class="bi bi-arrow-repeat me-1"></i>Easy returns</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -533,6 +602,154 @@
         .product-title-link:hover {
             text-decoration: none;
             color: #0d6efd;
+        }
+
+        /* Footer (modern e-commerce style) */
+        .footer-ecom {
+            background:
+                radial-gradient(1200px 600px at 20% -10%, rgba(13, 110, 253, 0.28) 0%, rgba(13, 110, 253, 0) 60%),
+                radial-gradient(900px 500px at 90% 0%, rgba(255, 193, 7, 0.14) 0%, rgba(255, 193, 7, 0) 55%),
+                linear-gradient(180deg, #0f172a 0%, #0b1220 100%);
+        }
+
+        .footer-ecom__top {
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .footer-ecom__bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(0, 0, 0, 0.18);
+            backdrop-filter: blur(6px);
+        }
+
+        .footer-ecom__mark {
+            width: 52px;
+            height: 52px;
+            flex: 0 0 52px;
+        }
+
+        .footer-ecom__logo {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            object-fit: cover;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .footer-ecom__logo-fallback {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(13, 110, 253, 0.18);
+            border: 1px solid rgba(13, 110, 253, 0.35);
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.2rem;
+        }
+
+        .footer-ecom__brand {
+            letter-spacing: 0.2px;
+        }
+
+        .footer-ecom__pill {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        .footer-ecom__desc {
+            line-height: 1.5;
+        }
+
+        .footer-ecom__links li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-ecom__links a {
+            color: rgba(255, 255, 255, 0.68);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: color 160ms ease, transform 160ms ease;
+        }
+
+        .footer-ecom__links a:hover {
+            color: rgba(255, 255, 255, 0.92);
+            transform: translateX(2px);
+        }
+
+        .footer-ecom__social {
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            color: rgba(255, 255, 255, 0.84);
+            text-decoration: none;
+            transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+        }
+
+        .footer-ecom__social:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.10);
+            border-color: rgba(255, 255, 255, 0.18);
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .footer-ecom__social--disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .footer-ecom__contact-row {
+            display: flex;
+            gap: 0.6rem;
+            align-items: flex-start;
+            margin-bottom: 0.6rem;
+        }
+
+        .footer-ecom__contact-row i {
+            margin-top: 2px;
+            color: rgba(255, 255, 255, 0.65);
+        }
+
+        .footer-ecom__micro-link:hover {
+            color: rgba(255, 255, 255, 0.88) !important;
+        }
+
+        .footer-ecom__pay-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            padding: 0.55rem 0.8rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            color: rgba(255, 255, 255, 0.78);
+            font-size: 0.875rem;
+            line-height: 1;
+        }
+
+        .footer-ecom__pay-pill i {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .footer-ecom__pay-pill--placeholder {
+            opacity: 0.7;
+        }
+
+        @media (max-width: 575.98px) {
+            .footer-ecom__desc {
+                font-size: 0.95rem;
+            }
         }
     </style>
 
