@@ -83,6 +83,16 @@
             </div>
         @endcan
 
+        <!-- Promotions -->
+        @can('coupon.view')
+            <div class="menu-item">
+                <a href="{{ route('admin.coupons.index') }}" class="menu-link {{ request()->routeIs('admin.coupons.*') ? 'active' : '' }}">
+                    <i class="bi bi-ticket-perforated menu-icon"></i>
+                    <span class="menu-text">Coupons</span>
+                </a>
+            </div>
+        @endcan
+
         <!-- Reports (placeholder) -->
         {{-- Add permissions + route later --}}
 

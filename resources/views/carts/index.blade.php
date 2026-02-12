@@ -36,6 +36,21 @@
                 </ul>
 
                 <div class="d-flex align-items-center gap-2">
+                    <div class="dropdown">
+                        @php($currentLocale = app()->getLocale())
+                        <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            {{ strtoupper($currentLocale) }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            @foreach (($supportedLocales ?? ['en' => 'English', 'my' => 'Myanmar']) as $code => $label)
+                                <li>
+                                    <a class="dropdown-item {{ $currentLocale === $code ? 'active' : '' }}" href="{{ route('language.switch', $code) }}">
+                                        {{ $label }} ({{ strtoupper($code) }})
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
                     <a href="{{ route('cart.index') }}" class="btn btn-outline-light position-relative" aria-label="Cart">
                         <i class="bi bi-cart3"></i>
                         @php($navCartCount = collect(session('cart', []))->sum('quantity'))
@@ -59,8 +74,8 @@
         <div class="container">
             <div class="d-flex justify-content-between align-items-end mb-4">
                 <div>
-                    <h1 class="display-6 fw-bold mb-1">Shopping Cart</h1>
-                    <p class="text-muted mb-0">Review items in your cart</p>
+                    <h1 class="display-6 fw-bold mb-1">{{ __('cart.title') }}</h1>
+                    <p class="text-muted mb-0">{{ __('cart.review_items') }}</p>
                 </div>
                 <div class="text-muted small"><span data-cart-count-display>{{ $count }}</span> items</div>
             </div>
@@ -183,21 +198,82 @@
                     </div>
 
                     <div class="col-lg-4">
+                        @if (!empty($couponMessage))
+                            <div class="alert alert-warning" role="alert">
+                                <i class="bi bi-exclamation-triangle me-2"></i>{{ $couponMessage }}
+                            </div>
+                        @endif
+
+                        <div class="card border-0 shadow-sm mb-4" id="couponCard"
+                             data-apply-url="{{ route('cart.coupon.apply') }}"
+                             data-remove-url="{{ route('cart.coupon.remove') }}">
+                            <div class="card-body" id="couponCardBody" data-applied="{{ !empty($couponCode) ? 1 : 0 }}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="fw-bold mb-0">Coupon</h5>
+                                    @if (!empty($couponCode))
+                                        <span class="badge bg-success">Applied</span>
+                                    @endif
+                                </div>
+
+                                <div id="couponFeedback" class="mt-3"></div>
+
+                                @if (!empty($couponCode))
+                                    <div class="mt-3 p-3 rounded border border-success-subtle bg-success bg-opacity-10" data-coupon-applied>
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <div class="fw-semibold">{{ $couponCode }}</div>
+                                                <div class="text-muted small">Discount: <span class="fw-semibold text-success">${{ number_format((float) $discount, 2) }}</span></div>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-success" data-coupon-remove-btn>
+                                                <span class="js-remove-label"><i class="bi bi-x-circle me-1"></i>Remove</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="mt-3">
+                                        <div class="text-muted small mb-2">Have a coupon?</div>
+                                        <div class="d-flex gap-2">
+                                            <input type="text" class="form-control" name="code" id="couponCodeInput" placeholder="Enter coupon code" autocomplete="off">
+                                            <button type="button" class="btn btn-outline-primary" data-coupon-apply-btn style="white-space: nowrap;">
+                                                <span class="js-apply-label">Apply</span>
+                                            </button>
+                                        </div>
+                                        <div class="form-text">Coupon is validated now; shipping is calculated at checkout.</div>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+
                         <div class="card border-0 shadow-sm">
                             <div class="card-body">
-                                <h5 class="fw-bold mb-3">Order Summary</h5>
+                                <h5 class="fw-bold mb-3">{{ __('cart.summary') }}</h5>
 
                                 <div class="d-flex justify-content-between mb-2">
-                                    <span class="text-muted">Items</span>
+                                    <span class="text-muted">{{ __('cart.items') }}</span>
                                     <span class="fw-semibold" data-cart-count-display>{{ $count }}</span>
                                 </div>
                                 <div class="d-flex justify-content-between mb-3">
-                                    <span class="text-muted">Total</span>
-                                    <span class="h5 mb-0 text-primary fw-bold">$<span data-cart-total>{{ number_format($total, 2) }}</span></span>
+                                    <span class="text-muted">{{ __('cart.subtotal') }}</span>
+                                    <span class="fw-semibold">$<span data-cart-subtotal>{{ number_format((float) $subtotal, 2) }}</span></span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-3">
+                                    <span class="text-muted">{{ __('cart.discount') }}</span>
+                                    <span class="text-success">- $<span data-cart-discount>{{ number_format((float) $discount, 2) }}</span></span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-3">
+                                    <span class="text-muted">{{ __('cart.shipping') }}</span>
+                                    <span class="text-muted">{{ __('cart.calculated_at_checkout') }}</span>
+                                </div>
+
+                                <hr>
+
+                                <div class="d-flex justify-content-between mb-3">
+                                    <span class="text-muted">{{ __('cart.total') }}</span>
+                                    <span class="h5 mb-0 text-primary fw-bold">$<span data-cart-grand-total>{{ number_format((float) $grandTotal, 2) }}</span></span>
                                 </div>
 
                                 <a href="{{ route('checkout.index') }}" class="btn btn-primary w-100">
-                                    <i class="bi bi-lock me-2"></i>Proceed to Checkout
+                                    <i class="bi bi-lock me-2"></i>{{ __('cart.proceed_to_checkout') }}
                                 </a>
                                 <small class="text-muted d-block mt-2">
                                     You will be asked to login before checkout.
@@ -230,8 +306,27 @@
             document.querySelectorAll('[data-cart-count-display]').forEach((el) => {
                 el.textContent = Number(count || 0);
             });
-            document.querySelectorAll('[data-cart-total]').forEach((el) => {
+
+            // subtotal (pre-discount)
+            document.querySelectorAll('[data-cart-subtotal]').forEach((el) => {
                 el.textContent = formatMoney(total);
+            });
+        }
+
+        function updatePricing(pricing) {
+            const p = pricing || {};
+            const subtotal = Number(p.subtotal || 0);
+            const discount = Number(p.discount || 0);
+            const grand = Number(p.grand_total || 0);
+
+            document.querySelectorAll('[data-cart-subtotal]').forEach((el) => {
+                el.textContent = formatMoney(subtotal);
+            });
+            document.querySelectorAll('[data-cart-discount]').forEach((el) => {
+                el.textContent = formatMoney(discount);
+            });
+            document.querySelectorAll('[data-cart-grand-total]').forEach((el) => {
+                el.textContent = formatMoney(grand);
             });
         }
 
@@ -310,6 +405,11 @@
 
                         updateCartBadge(data.cart?.count);
                         updateCartTotals(data.cart?.count, data.cart?.total);
+                        if (data.pricing) updatePricing(data.pricing);
+
+                        if (data.coupon_message) {
+                            showCartToast(data.coupon_message, 'danger');
+                        }
 
                         if (kind === 'update' && data.item) {
                             const row = document.querySelector('tr[data-product-id="' + data.item.product_id + '"]');
@@ -341,6 +441,171 @@
                     }
                 });
             });
+
+            // Coupon apply/remove (AJAX)
+            const couponCard = document.getElementById('couponCard');
+            const feedback = document.getElementById('couponFeedback');
+            const couponBody = document.getElementById('couponCardBody');
+
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const applyUrl = couponCard?.dataset?.applyUrl;
+            const removeUrl = couponCard?.dataset?.removeUrl;
+
+            const setFeedback = (type, message) => {
+                if (!feedback) return;
+                if (!message) {
+                    feedback.innerHTML = '';
+                    return;
+                }
+                const cls = type === 'success' ? 'alert-success' : 'alert-danger';
+                feedback.innerHTML = `
+                    <div class="alert ${cls} py-2 mb-0" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle'} me-2"></i>
+                            <div class="small">${message}</div>
+                        </div>
+                    </div>
+                `;
+            };
+
+            const renderApplied = (code, discount) => {
+                if (!couponBody) return;
+                couponBody.dataset.applied = '1';
+
+                const header = couponBody.querySelector('.d-flex.justify-content-between');
+                if (header) {
+                    header.innerHTML = `<h5 class="fw-bold mb-0">Coupon</h5><span class="badge bg-success">Applied</span>`;
+                }
+
+                // remove old content except header + feedback
+                Array.from(couponBody.children).forEach((el) => {
+                    if (el === header || el === feedback) return;
+                    el.remove();
+                });
+
+                couponBody.insertAdjacentHTML('beforeend', `
+                    <div class="mt-3 p-3 rounded border border-success-subtle bg-success bg-opacity-10" data-coupon-applied>
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="fw-semibold">${code}</div>
+                                <div class="text-muted small">Discount: <span class="fw-semibold text-success">$${formatMoney(discount)}</span></div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-success" data-coupon-remove-btn>
+                                <span class="js-remove-label"><i class="bi bi-x-circle me-1"></i>Remove</span>
+                            </button>
+                        </div>
+                    </div>
+                `);
+
+                bindCouponHandlers();
+            };
+
+            const renderEntry = () => {
+                if (!couponBody) return;
+                couponBody.dataset.applied = '0';
+
+                const header = couponBody.querySelector('.d-flex.justify-content-between');
+                if (header) header.innerHTML = `<h5 class="fw-bold mb-0">Coupon</h5>`;
+                setFeedback(null, null);
+
+                Array.from(couponBody.children).forEach((el) => {
+                    if (el === header || el === feedback) return;
+                    el.remove();
+                });
+
+                couponBody.insertAdjacentHTML('beforeend', `
+                    <div class="mt-3">
+                        <div class="text-muted small mb-2">Have a coupon?</div>
+                        <div class="d-flex gap-2">
+                            <input type="text" class="form-control" name="code" id="couponCodeInput" placeholder="Enter coupon code" autocomplete="off">
+                            <button type="button" class="btn btn-outline-primary" data-coupon-apply-btn style="white-space: nowrap;">
+                                <span class="js-apply-label">Apply</span>
+                            </button>
+                        </div>
+                        <div class="form-text">Coupon is validated now; shipping is calculated at checkout.</div>
+                    </div>
+                `);
+
+                bindCouponHandlers();
+            };
+
+            const bindCouponHandlers = () => {
+                const applyBtn = couponBody?.querySelector('[data-coupon-apply-btn]');
+                const removeBtn = couponBody?.querySelector('[data-coupon-remove-btn]');
+                const codeInput = couponBody?.querySelector('#couponCodeInput');
+
+                if (applyBtn && applyUrl && applyBtn.dataset.bound !== '1') {
+                    applyBtn.dataset.bound = '1';
+                    applyBtn.addEventListener('click', async () => {
+                        setFeedback(null, null);
+                        const code = (codeInput?.value || '').trim();
+                        if (!code) {
+                            setFeedback('error', 'Please enter a coupon code.');
+                            return;
+                        }
+
+                        applyBtn.disabled = true;
+                        const label = applyBtn.querySelector('.js-apply-label');
+                        if (label) label.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Applying...';
+
+                        try {
+                            const res = await fetch(applyUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': token,
+                                },
+                                body: JSON.stringify({ code }),
+                            });
+                            const data = await res.json();
+                            if (!res.ok || !data.ok) throw new Error(data.message || 'Invalid coupon.');
+
+                            setFeedback('success', data.message || 'Coupon applied.');
+                            if (data.pricing) updatePricing(data.pricing);
+                            renderApplied(data.pricing?.coupon_code || code, Number(data.pricing?.discount || 0));
+                        } catch (e) {
+                            setFeedback('error', e.message || 'Invalid coupon.');
+                        } finally {
+                            applyBtn.disabled = false;
+                            if (label) label.textContent = 'Apply';
+                        }
+                    });
+                }
+
+                if (removeBtn && removeUrl && removeBtn.dataset.bound !== '1') {
+                    removeBtn.dataset.bound = '1';
+                    removeBtn.addEventListener('click', async () => {
+                        setFeedback(null, null);
+                        removeBtn.disabled = true;
+                        const label = removeBtn.querySelector('.js-remove-label');
+                        if (label) label.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Removing...';
+
+                        try {
+                            const res = await fetch(removeUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': token,
+                                },
+                            });
+                            const data = await res.json();
+                            if (!res.ok || !data.ok) throw new Error(data.message || 'Could not remove coupon.');
+
+                            setFeedback('success', data.message || 'Coupon removed.');
+                            if (data.pricing) updatePricing(data.pricing);
+                            renderEntry();
+                        } catch (e) {
+                            setFeedback('error', e.message || 'Could not remove coupon.');
+                        } finally {
+                            removeBtn.disabled = false;
+                            if (label) label.textContent = 'Remove';
+                        }
+                    });
+                }
+            };
+
+            bindCouponHandlers();
         });
     </script>
 </body>

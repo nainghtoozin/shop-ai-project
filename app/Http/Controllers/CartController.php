@@ -3,11 +3,45 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Services\CouponService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
 {
+    private function pricingFromCart(array $cart): array
+    {
+        $totals = $this->cartTotals($cart);
+        $subtotal = (float) $totals['total'];
+        $discount = 0.0;
+        $couponCode = null;
+        $couponMessage = null;
+
+        $sessionCode = (string) session()->get('coupon.code', '');
+        if ($sessionCode !== '') {
+            $svc = new CouponService();
+            $result = $svc->validateAndCalculate($sessionCode, $subtotal, Auth::id() ?: null);
+            if (!($result['ok'] ?? false)) {
+                session()->forget('coupon');
+                $couponMessage = $result['message'] ?? 'Coupon is not valid.';
+            } else {
+                $discount = (float) ($result['discount'] ?? 0);
+                $couponCode = $result['coupon']?->code;
+            }
+        }
+
+        $grand = round(max(0.0, $subtotal - $discount), 2);
+
+        return [
+            'subtotal' => round($subtotal, 2),
+            'discount' => round($discount, 2),
+            'grand_total' => $grand,
+            'coupon_code' => $couponCode,
+            'coupon_message' => $couponMessage,
+        ];
+    }
+
     private function cartTotals(array $cart): array
     {
         $count = 0;
@@ -29,6 +63,7 @@ class CartController extends Controller
     private function jsonCartResponse(array $cart, string $message, array $extra = []): JsonResponse
     {
         $totals = $this->cartTotals($cart);
+        $pricing = $this->pricingFromCart($cart);
 
         return response()->json(array_merge([
             'ok' => true,
@@ -37,6 +72,13 @@ class CartController extends Controller
                 'count' => $totals['count'],
                 'total' => $totals['total'],
             ],
+            'pricing' => [
+                'subtotal' => $pricing['subtotal'],
+                'discount' => $pricing['discount'],
+                'grand_total' => $pricing['grand_total'],
+                'coupon_code' => $pricing['coupon_code'],
+            ],
+            'coupon_message' => $pricing['coupon_message'],
         ], $extra));
     }
 
@@ -49,13 +91,90 @@ class CartController extends Controller
             return $item;
         });
 
-        $total = $items->sum('subtotal');
+        $subtotal = (float) $items->sum('subtotal');
         $count = $items->sum('quantity');
+
+        $pricing = $this->pricingFromCart($cart);
+
+        // If cart is empty, always clear coupon.
+        if ((int) $count === 0) {
+            session()->forget('coupon');
+        }
 
         return view('carts.index', [
             'items' => $items,
-            'total' => $total,
+            'subtotal' => $pricing['subtotal'],
+            'discount' => $pricing['discount'],
+            'grandTotal' => $pricing['grand_total'],
+            'couponCode' => $pricing['coupon_code'],
+            'couponMessage' => $pricing['coupon_message'],
             'count' => $count,
+        ]);
+    }
+
+    public function applyCoupon(Request $request): JsonResponse
+    {
+        $cart = session()->get('cart', []);
+        if (empty($cart)) {
+            return response()->json(['ok' => false, 'message' => 'Your cart is empty.'], 422);
+        }
+
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:50'],
+        ]);
+
+        // Prevent multiple coupons (force remove first)
+        if (session()->has('coupon.code')) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'A coupon is already applied. Remove it first to apply a different one.',
+            ], 422);
+        }
+
+        $subtotal = (float) $this->cartTotals($cart)['total'];
+
+        $svc = new CouponService();
+        $result = $svc->validateAndCalculate($validated['code'], $subtotal, Auth::id() ?: null);
+        if (!($result['ok'] ?? false)) {
+            return response()->json([
+                'ok' => false,
+                'message' => $result['message'] ?? 'Invalid coupon.',
+            ], 422);
+        }
+
+        /** @var \App\Models\Coupon $coupon */
+        $coupon = $result['coupon'];
+        session()->put('coupon', ['id' => $coupon->id, 'code' => $coupon->code]);
+
+        $pricing = $this->pricingFromCart($cart);
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Coupon applied successfully.',
+            'pricing' => [
+                'subtotal' => $pricing['subtotal'],
+                'discount' => $pricing['discount'],
+                'grand_total' => $pricing['grand_total'],
+                'coupon_code' => $pricing['coupon_code'],
+            ],
+        ]);
+    }
+
+    public function removeCoupon(Request $request): JsonResponse
+    {
+        session()->forget('coupon');
+        $cart = session()->get('cart', []);
+        $pricing = $this->pricingFromCart($cart);
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Coupon removed.',
+            'pricing' => [
+                'subtotal' => $pricing['subtotal'],
+                'discount' => $pricing['discount'],
+                'grand_total' => $pricing['grand_total'],
+                'coupon_code' => null,
+            ],
         ]);
     }
 
@@ -161,6 +280,10 @@ class CartController extends Controller
             session()->put('cart', $cart);
         }
 
+        if (empty($cart)) {
+            session()->forget('coupon');
+        }
+
         if ($request->expectsJson()) {
             return $this->jsonCartResponse($cart, 'Item removed from cart.', [
                 'removed' => (int) $productId,
@@ -173,6 +296,7 @@ class CartController extends Controller
     public function clear(Request $request)
     {
         session()->forget('cart');
+        session()->forget('coupon');
 
         if ($request->expectsJson()) {
             return $this->jsonCartResponse([], 'Cart cleared.');

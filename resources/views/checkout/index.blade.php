@@ -36,6 +36,21 @@
                 </ul>
 
                 <div class="d-flex align-items-center gap-2">
+                    <div class="dropdown">
+                        @php($currentLocale = app()->getLocale())
+                        <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            {{ strtoupper($currentLocale) }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            @foreach (($supportedLocales ?? ['en' => 'English', 'my' => 'Myanmar']) as $code => $label)
+                                <li>
+                                    <a class="dropdown-item {{ $currentLocale === $code ? 'active' : '' }}" href="{{ route('language.switch', $code) }}">
+                                        {{ $label }} ({{ strtoupper($code) }})
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
                     <a href="{{ route('cart.index') }}" class="btn btn-outline-light position-relative" aria-label="Cart">
                         <i class="bi bi-cart3"></i>
                         @php($navCartCount = collect(session('cart', []))->sum('quantity'))
@@ -53,8 +68,8 @@
         <div class="container">
             <div class="d-flex justify-content-between align-items-end mb-4">
                 <div>
-                    <h1 class="display-6 fw-bold mb-1">Checkout</h1>
-                    <p class="text-muted mb-0">Confirm your details and place your order</p>
+                    <h1 class="display-6 fw-bold mb-1">{{ __('checkout.title') }}</h1>
+                    <p class="text-muted mb-0">{{ __('checkout.confirm_details') }}</p>
                 </div>
                 <div class="text-muted small">{{ $items->sum('quantity') }} items</div>
             </div>
@@ -244,14 +259,19 @@
                                         <span>${{ number_format($tax, 2) }}</span>
                                     </div>
                                     <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">{{ __('checkout.discount') }}</span>
+                                        <span class="text-success">- $<span id="js-discount">{{ number_format($discount, 2) }}</span></span>
+                                    </div>
+                                    @if (!empty($appliedCoupon))
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted">{{ __('checkout.coupon') }}</span>
+                                            <span class="text-muted"><code>{{ $appliedCoupon->code }}</code></span>
+                                        </div>
+                                    @endif
+                                    <div class="d-flex justify-content-between mb-2">
                                         <span class="text-muted">Shipping</span>
                                         <span>$<span id="js-shipping-cost">{{ number_format($shippingCost, 2) }}</span></span>
                                     </div>
-                                    <div class="d-flex justify-content-between mb-3">
-                                        <span class="text-muted">Discount</span>
-                                        <span>-${{ number_format($discount, 2) }}</span>
-                                    </div>
-
                                     <hr>
 
                                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -260,7 +280,7 @@
                                     </div>
 
                                     <button type="submit" id="placeOrderBtn" class="btn btn-primary w-100 btn-lg" {{ ($paymentMethods ?? collect())->isEmpty() ? 'disabled' : '' }}>
-                                        <i class="bi bi-check2-circle me-2"></i>Place Order
+                                        <i class="bi bi-check2-circle me-2"></i>{{ __('checkout.place_order') }}
                                     </button>
 
                                     <a href="{{ route('cart.index') }}" class="btn btn-outline-primary w-100 mt-2">
@@ -393,6 +413,9 @@
         if (city) city.addEventListener('change', fetchShippingQuote);
         if (deliveryType) deliveryType.addEventListener('change', fetchShippingQuote);
         fetchShippingQuote();
+
+        // expose for external updates
+        window.__refreshShippingQuote = fetchShippingQuote;
     });
 </script>
 

@@ -28,6 +28,7 @@ class SettingController extends Controller
 
         $validated = $request->validate([
             'site_name' => ['nullable', 'string', 'max:255'],
+            'default_language' => ['nullable', Rule::in(array_keys((array) config('localization.supported', ['en' => 'English'])))],
             'contact_email' => ['nullable', 'email', 'max:255'],
             'contact_phone' => ['nullable', 'string', 'max:100'],
             'address' => ['nullable', 'string', 'max:2000'],
@@ -44,6 +45,7 @@ class SettingController extends Controller
 
         $data = [
             'site_name' => $validated['site_name'] ?? ($current['site_name'] ?? null),
+            'default_language' => $validated['default_language'] ?? ($current['default_language'] ?? null),
             'contact_email' => $validated['contact_email'] ?? ($current['contact_email'] ?? null),
             'contact_phone' => $validated['contact_phone'] ?? ($current['contact_phone'] ?? null),
             'address' => $validated['address'] ?? ($current['address'] ?? null),

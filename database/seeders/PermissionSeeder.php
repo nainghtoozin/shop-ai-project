@@ -45,6 +45,12 @@ class PermissionSeeder extends Seeder
             'setting.view',
             'setting.edit',
 
+            // Coupons
+            'coupon.view',
+            'coupon.create',
+            'coupon.edit',
+            'coupon.delete',
+
             // Dashboard
             'dashboard.view',
             'dashboard.view.own_income',

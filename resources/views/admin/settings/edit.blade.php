@@ -44,6 +44,18 @@
                                 <input type="text" name="site_name" class="form-control" value="{{ old('site_name', $settings['site_name'] ?? '') }}" @cannot('setting.edit') disabled @endcannot>
                             </div>
 
+                            <div class="mb-3">
+                                <label class="form-label">{{ __('admin.default_language') }}</label>
+                                <select name="default_language" class="form-select" @cannot('setting.edit') disabled @endcannot>
+                                    @foreach (($supportedLocales ?? ['en' => 'English', 'my' => 'Myanmar']) as $code => $label)
+                                        <option value="{{ $code }}" {{ old('default_language', $settings['default_language'] ?? 'en') === $code ? 'selected' : '' }}>
+                                            {{ $label }} ({{ strtoupper($code) }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <div class="form-text">Used for new visitors. Users can switch language from the navbar.</div>
+                            </div>
+
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label">Contact Email</label>

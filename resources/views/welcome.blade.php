@@ -40,25 +40,40 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="{{ route('home') }}"><i class="bi bi-house me-1"></i> Home</a>
+                        <a class="nav-link active" href="{{ route('home') }}"><i class="bi bi-house me-1"></i> {{ __('messages.home') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('products.index') }}"><i class="bi bi-grid me-1"></i> Products</a>
+                        <a class="nav-link" href="{{ route('products.index') }}"><i class="bi bi-grid me-1"></i> {{ __('messages.products') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('categories.index') }}"><i class="bi bi-tag me-1"></i> Categories</a>
+                        <a class="nav-link" href="{{ route('categories.index') }}"><i class="bi bi-tag me-1"></i> {{ __('messages.categories') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-percent me-1"></i> Deals</a>
+                        <a class="nav-link" href="#"><i class="bi bi-percent me-1"></i> {{ __('messages.deals') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-info-circle me-1"></i> About</a>
+                        <a class="nav-link" href="#"><i class="bi bi-info-circle me-1"></i> {{ __('messages.about') }}</a>
                     </li>
                 </ul>
 
                 <div class="d-flex align-items-center">
+                    <div class="dropdown me-2">
+                        @php($currentLocale = app()->getLocale())
+                        <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-translate me-1"></i>{{ strtoupper($currentLocale) }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            @foreach (($supportedLocales ?? ['en' => 'English', 'my' => 'Myanmar']) as $code => $label)
+                                <li>
+                                    <a class="dropdown-item {{ $currentLocale === $code ? 'active' : '' }}" href="{{ route('language.switch', $code) }}">
+                                        {{ $label }} ({{ strtoupper($code) }})
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
                     <form action="{{ route('search') }}" method="GET" class="input-group me-2" style="max-width: 320px;">
-                        <input class="form-control" type="search" name="q" value="{{ request('q') }}" placeholder="Search products or SKU..." aria-label="Search" autocomplete="off">
+                        <input class="form-control" type="search" name="q" value="{{ request('q') }}" placeholder="{{ __('messages.search_placeholder') }}" aria-label="Search" autocomplete="off">
                         <button class="btn btn-outline-light" type="submit" aria-label="Search">
                             <i class="bi bi-search"></i>
                         </button>
@@ -75,10 +90,10 @@
 
                     @guest
                         <a href="{{ route('login') }}" class="btn btn-outline-light me-2">
-                            <i class="bi bi-person me-1"></i> Login
+                            <i class="bi bi-person me-1"></i> {{ __('auth.login') }}
                         </a>
                         <a href="{{ route('register') }}" class="btn btn-light text-primary">
-                            <i class="bi bi-person-plus me-1"></i> Register
+                            <i class="bi bi-person-plus me-1"></i> {{ __('auth.register') }}
                         </a>
                     @else
                         <div class="dropdown">
@@ -102,7 +117,7 @@
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
                                         <button type="submit" class="dropdown-item">
-                                            <i class="bi bi-box-arrow-right me-2"></i> Logout
+                                            <i class="bi bi-box-arrow-right me-2"></i> {{ __('auth.logout') }}
                                         </button>
                                     </form>
                                 </li>

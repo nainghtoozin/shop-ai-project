@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\CityController as AdminCityController;
 use App\Http\Controllers\Admin\DeliveryCategoryController as AdminDeliveryCategoryController;
 use App\Http\Controllers\Admin\DeliveryTypeController as AdminDeliveryTypeController;
 use App\Http\Controllers\Admin\HeroSliderController as AdminHeroSliderController;
+use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\RoleController as AdminRoleController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\HomeController;
@@ -21,8 +22,20 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\MyOrdersController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\App;
 
 Route::get('/', HomeController::class)->name('home');
+
+// Language switcher (session-based)
+Route::get('/language/{locale}', function (string $locale) {
+    $supported = array_keys((array) config('localization.supported', ['en' => 'English']));
+    if (!in_array($locale, $supported, true)) abort(404);
+
+    // Only store the user's choice; middleware applies it on the next request.
+    session()->put((string) config('localization.session_key', 'locale'), $locale);
+
+    return redirect()->back();
+})->name('language.switch');
 
 // Frontend Routes
 Route::get('/products', [FrontProductController::class, 'index'])->name('products.index');
@@ -36,6 +49,8 @@ Route::get('/category/{category:slug}', [FrontCategoryController::class, 'show']
 
 // Cart (Session-based)
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+Route::post('/cart/coupon/apply', [CartController::class, 'applyCoupon'])->name('cart.coupon.apply');
+Route::post('/cart/coupon/remove', [CartController::class, 'removeCoupon'])->name('cart.coupon.remove');
 Route::post('/cart/add/{productId}', [CartController::class, 'add'])->name('cart.add');
 Route::post('/cart/update/{productId}', [CartController::class, 'update'])->name('cart.update');
 Route::delete('/cart/remove/{productId}', [CartController::class, 'remove'])->name('cart.remove');
@@ -105,6 +120,10 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     // Hero slider (homepage)
     Route::resource('hero-sliders', AdminHeroSliderController::class)->except(['show']);
     Route::patch('hero-sliders/{hero_slider}/toggle-status', [AdminHeroSliderController::class, 'toggleStatus'])->name('hero-sliders.toggle-status');
+
+    // Coupons
+    Route::resource('coupons', AdminCouponController::class)->except(['show']);
+    Route::patch('coupons/{coupon}/toggle-status', [AdminCouponController::class, 'toggleStatus'])->name('coupons.toggle-status');
 
     // Users & Roles
     Route::resource('users', AdminUserController::class)->except(['show']);

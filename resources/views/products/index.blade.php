@@ -36,6 +36,21 @@
                 </ul>
 
                 <div class="d-flex align-items-center gap-2">
+                    <div class="dropdown">
+                        @php($currentLocale = app()->getLocale())
+                        <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            {{ strtoupper($currentLocale) }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            @foreach (($supportedLocales ?? ['en' => 'English', 'my' => 'Myanmar']) as $code => $label)
+                                <li>
+                                    <a class="dropdown-item {{ $currentLocale === $code ? 'active' : '' }}" href="{{ route('language.switch', $code) }}">
+                                        {{ $label }} ({{ strtoupper($code) }})
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
                     <a href="{{ route('cart.index') }}" class="btn btn-outline-light position-relative" aria-label="Cart">
                         <i class="bi bi-cart3"></i>
                         @php($navCartCount = collect(session('cart', []))->sum('quantity'))

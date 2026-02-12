@@ -114,7 +114,7 @@ class ProductFactory extends Factory
      */
     private function getProductNamesByCategory(string $category): array
     {
-        return match($category) {
+        return match ($category) {
             'Electronics' => [
                 'Wireless Bluetooth Headphones',
                 'Smartphone 128GB',
@@ -304,48 +304,76 @@ class ProductFactory extends Factory
     private function makeProductNameUnique($productName, $category): string
     {
         $suffixes = [
-            'Pro', 'Plus', 'Elite', 'Max', 'Ultra', 'Premium', 'Advanced', 
-            'Deluxe', 'Professional', 'Standard', 'Classic', 'Modern', 
-            'Digital', 'Smart', 'Wireless', 'Compact', 'Heavy Duty'
+            'Pro',
+            'Plus',
+            'Elite',
+            'Max',
+            'Ultra',
+            'Premium',
+            'Advanced',
+            'Deluxe',
+            'Professional',
+            'Standard',
+            'Classic',
+            'Modern',
+            'Digital',
+            'Smart',
+            'Wireless',
+            'Compact',
+            'Heavy Duty'
         ];
 
         $brands = [
-            'TechPro', 'UltraTech', 'MasterCraft', 'EliteSeries', 'ProMax',
-            'SmartLife', 'DigitalEdge', 'PowerTech', 'MegaStore', 'PremiumLine'
+            'TechPro',
+            'UltraTech',
+            'MasterCraft',
+            'EliteSeries',
+            'ProMax',
+            'SmartLife',
+            'DigitalEdge',
+            'PowerTech',
+            'MegaStore',
+            'PremiumLine'
         ];
 
         $versions = [
-            '2024 Edition', 'v2.0', 'Series X', 'Generation 3', 'Model Z',
-            'Limited Edition', 'Special Edition', 'Anniversary Edition'
+            '2024 Edition',
+            'v2.0',
+            'Series X',
+            'Generation 3',
+            'Model Z',
+            'Limited Edition',
+            'Special Edition',
+            'Anniversary Edition'
         ];
 
         // 40% chance to add a suffix
         if ($this->faker->boolean(40)) {
             return $productName . ' ' . $this->faker->randomElement($suffixes);
         }
-        
+
         // 30% chance to add a brand name
         if ($this->faker->boolean(30)) {
             return $this->faker->randomElement($brands) . ' ' . $productName;
         }
-        
+
         // 20% chance to add a version
         if ($this->faker->boolean(20)) {
             return $productName . ' ' . $this->faker->randomElement($versions);
         }
-        
+
         // 10% chance to add a random color or size
         if ($this->faker->boolean(10)) {
             $colors = ['Red', 'Blue', 'Black', 'White', 'Green', 'Gray', 'Silver', 'Gold'];
             $sizes = ['Small', 'Medium', 'Large', 'X-Large'];
-            
+
             if (in_array($category, ['Clothing & Apparel', 'Sports & Outdoors'])) {
                 return $productName . ' (' . $this->faker->randomElement($colors) . ', ' . $this->faker->randomElement($sizes) . ')';
             } else {
                 return $productName . ' (' . $this->faker->randomElement($colors) . ')';
             }
         }
-        
+
         // Return original name if no modification
         return $productName;
     }
@@ -368,8 +396,8 @@ class ProductFactory extends Factory
             'Engineered to exceed expectations and deliver outstanding value.',
         ];
 
-        return $this->faker->randomElement($descriptions) . ' ' . 
-               $this->faker->sentence(10) . ' ' . 
-               $this->faker->sentence(8);
+        return $this->faker->randomElement($descriptions) . ' ' .
+            $this->faker->sentence(10) . ' ' .
+            $this->faker->sentence(8);
     }
 }

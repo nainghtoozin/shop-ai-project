@@ -39,6 +39,16 @@ class AppServiceProvider extends ServiceProvider
             View::share('settings', []);
         }
 
+        // Supported locales for the language switcher.
+        View::share('supportedLocales', (array) config('localization.supported', ['en' => 'English']));
+
+        // Default locale from settings (useful for views; middleware applies it for new visitors).
+        try {
+            View::share('defaultLocale', (string) (setting((string) config('localization.setting_key', 'default_language'), config('app.locale', 'en'))));
+        } catch (\Throwable $e) {
+            View::share('defaultLocale', (string) config('app.locale', 'en'));
+        }
+
         // Share footer payment methods globally (no cache -> immediate updates)
         try {
             if (Schema::hasTable('payment_methods')) {

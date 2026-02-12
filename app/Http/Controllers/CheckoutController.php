@@ -10,6 +10,9 @@ use App\Models\City;
 use App\Models\DeliveryType;
 use App\Models\DeliveryCategory;
 use App\Models\Product;
+use App\Models\Coupon;
+use App\Models\CouponUsage;
+use App\Services\CouponService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -35,6 +38,21 @@ class CheckoutController extends Controller
         $tax = 0.00;
         $shippingCost = 0.00;
         $discount = 0.00;
+
+        $appliedCoupon = null;
+        $couponCode = (string) session()->get('coupon.code', '');
+        if ($couponCode !== '') {
+            $svc = new CouponService();
+            $result = $svc->validateAndCalculate($couponCode, $subtotal, Auth::id());
+            if (!($result['ok'] ?? false)) {
+                session()->forget('coupon');
+                session()->flash('error', $result['message'] ?? 'Coupon is not valid.');
+            } else {
+                $discount = (float) $result['discount'];
+                $appliedCoupon = $result['coupon'];
+            }
+        }
+
         $total = round(($subtotal + $tax + $shippingCost) - $discount, 2);
 
         $paymentMethods = PaymentMethod::query()
@@ -52,7 +70,96 @@ class CheckoutController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'charge_type', 'extra_charge', 'description']);
 
-        return view('checkout.index', compact('items', 'subtotal', 'tax', 'shippingCost', 'discount', 'total', 'paymentMethods', 'cities', 'deliveryTypes'));
+        return view('checkout.index', compact('items', 'subtotal', 'tax', 'shippingCost', 'discount', 'total', 'paymentMethods', 'cities', 'deliveryTypes', 'appliedCoupon'));
+    }
+
+    public function applyCoupon(Request $request)
+    {
+        if (!Auth::check()) {
+            return redirect()->guest(route('login'));
+        }
+
+        $cart = session()->get('cart', []);
+        if (empty($cart)) {
+            return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
+        }
+
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:50'],
+        ]);
+
+        $items = collect($cart)->map(function ($item) {
+            $qty = (int) ($item['quantity'] ?? 0);
+            $price = (float) ($item['price'] ?? 0);
+            return $qty * $price;
+        });
+
+        $subtotal = round((float) $items->sum(), 2);
+
+        $svc = new CouponService();
+        $result = $svc->validateAndCalculate($validated['code'], $subtotal, Auth::id());
+
+        if (!($result['ok'] ?? false)) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => $result['message'] ?? 'Invalid coupon.',
+                ], 422);
+            }
+
+            return back()->withInput()->with('error', $result['message'] ?? 'Invalid coupon.');
+        }
+
+        /** @var \App\Models\Coupon $coupon */
+        $coupon = $result['coupon'];
+        session()->put('coupon', [
+            'id' => $coupon->id,
+            'code' => $coupon->code,
+        ]);
+
+        if ($request->expectsJson()) {
+            $discount = (float) ($result['discount'] ?? 0);
+            $baseTotal = round(($subtotal + 0.0) - $discount, 2);
+            return response()->json([
+                'ok' => true,
+                'message' => 'Coupon applied successfully.',
+                'coupon' => [
+                    'code' => $coupon->code,
+                    'discount' => $discount,
+                    'base_total' => $baseTotal,
+                ],
+            ]);
+        }
+
+        return back()->with('success', 'Coupon applied successfully.');
+    }
+
+    public function removeCoupon(Request $request)
+    {
+        if (!Auth::check()) {
+            return redirect()->guest(route('login'));
+        }
+
+        session()->forget('coupon');
+
+        if ($request->expectsJson()) {
+            // Recompute base_total without discount
+            $cart = session()->get('cart', []);
+            $subtotal = collect($cart)->sum(function ($item) {
+                return ((int) ($item['quantity'] ?? 0)) * ((float) ($item['price'] ?? 0));
+            });
+            $subtotal = round((float) $subtotal, 2);
+
+            return response()->json([
+                'ok' => true,
+                'message' => 'Coupon removed.',
+                'coupon' => null,
+                'base_total' => round($subtotal, 2),
+                'discount' => 0.0,
+            ]);
+        }
+
+        return back()->with('success', 'Coupon removed.');
     }
 
     public function shippingQuote(Request $request)
@@ -226,6 +333,56 @@ class CheckoutController extends Controller
             $quote = $this->calculateShipping($city, $deliveryType, $productExtra);
             $shippingCost = (float) $quote['shipping_cost'];
 
+            // Coupon (re-validate inside transaction; never trust session blindly)
+            $couponCode = (string) session()->get('coupon.code', '');
+            $couponId = (int) session()->get('coupon.id', 0);
+            $coupon = null;
+            $discount = 0.0;
+
+            if ($couponId > 0 && $couponCode !== '') {
+                $coupon = Coupon::query()->whereKey($couponId)->lockForUpdate()->first();
+                if (!$coupon || strtoupper($coupon->code) !== strtoupper($couponCode) || !$coupon->is_active) {
+                    throw ValidationException::withMessages([
+                        'coupon' => 'Your coupon is no longer valid. Please apply again.',
+                    ]);
+                }
+
+                $now = now();
+                if ($now->lt($coupon->start_date) || $now->gt($coupon->end_date)) {
+                    throw ValidationException::withMessages([
+                        'coupon' => 'Your coupon is no longer valid. Please apply again.',
+                    ]);
+                }
+
+                if ($subtotal < (float) ($coupon->min_order_amount ?? 0)) {
+                    throw ValidationException::withMessages([
+                        'coupon' => 'Minimum order amount not met for this coupon.',
+                    ]);
+                }
+
+                if (!is_null($coupon->usage_limit) && (int) $coupon->used_count >= (int) $coupon->usage_limit) {
+                    throw ValidationException::withMessages([
+                        'coupon' => 'This coupon has reached its usage limit.',
+                    ]);
+                }
+
+                if (!is_null($coupon->per_user_limit)) {
+                    $usedByUser = CouponUsage::query()
+                        ->where('coupon_id', $coupon->id)
+                        ->where('user_id', Auth::id())
+                        ->count();
+
+                    if ($usedByUser >= (int) $coupon->per_user_limit) {
+                        throw ValidationException::withMessages([
+                            'coupon' => 'You have already used this coupon the maximum number of times.',
+                        ]);
+                    }
+                }
+
+                $svc = new CouponService();
+                $discount = (float) $svc->calculateDiscountAmount($coupon->type, (float) $coupon->value, (float) $subtotal, $coupon->max_discount_amount);
+            }
+
             $total = round(($subtotal + $tax + $shippingCost) - $discount, 2);
 
             $order = Order::create([
@@ -235,6 +392,7 @@ class CheckoutController extends Controller
                 'tax' => $tax,
                 'shipping_cost' => $shippingCost,
                 'discount' => $discount,
+                'coupon_code' => $coupon?->code,
                 'total' => $total,
                 'status' => 'pending',
                 'customer_name' => $validated['customer_name'],
@@ -292,6 +450,16 @@ class CheckoutController extends Controller
                 'transaction_id' => null,
             ]);
 
+            if ($coupon) {
+                $coupon->increment('used_count');
+                CouponUsage::create([
+                    'coupon_id' => $coupon->id,
+                    'user_id' => Auth::id(),
+                    'order_id' => $order->id,
+                    'used_at' => now(),
+                ]);
+            }
+
             return $order;
             });
         } catch (\Throwable $e) {
@@ -302,6 +470,7 @@ class CheckoutController extends Controller
         }
 
         session()->forget('cart');
+        session()->forget('coupon');
 
         return redirect()->route('checkout.success', $order)->with('success', 'Order placed successfully.');
     }
