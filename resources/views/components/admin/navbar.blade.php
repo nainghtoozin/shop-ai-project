@@ -12,7 +12,7 @@
                 <input type="text" 
                        class="form-control" 
                        style="width: 300px; padding-left: 35px;" 
-                       placeholder="Search...">
+                       placeholder="{{ __('admin.search_placeholder') }}">
                 <button type="submit" class="btn btn-link position-absolute" style="left: 8px; top: 50%; transform: translateY(-50%);">
                     <i class="bi bi-search text-muted"></i>
                 </button>
@@ -32,7 +32,7 @@
             </button>
             <ul class="dropdown-menu dropdown-menu-end" style="width: 300px;">
                 <li class="dropdown-header">
-                    <i class="bi bi-bell me-2"></i>Notifications
+                    <i class="bi bi-bell me-2"></i>{{ __('admin.notifications') }}
                 </li>
                 <li><hr class="dropdown-divider"></li>
                 <li>
@@ -66,7 +66,7 @@
                 <li><hr class="dropdown-divider"></li>
                 <li>
                     <a href="#" class="dropdown-item text-center">
-                        View all notifications
+                        {{ __('admin.view_all_notifications') }}
                     </a>
                 </li>
             </ul>
@@ -87,7 +87,7 @@
             <ul class="dropdown-menu dropdown-menu-end">
                 <li>
                     <a href="{{ route('profile.edit') }}" class="dropdown-item">
-                        <i class="bi bi-person me-2"></i>Profile
+                        <i class="bi bi-person me-2"></i>{{ __('admin.profile') }}
                     </a>
                 </li>
                 <li>
@@ -97,7 +97,7 @@
                 </li>
                 <li>
                     <a href="#" class="dropdown-item">
-                        <i class="bi bi-gear me-2"></i>Settings
+                        <i class="bi bi-gear me-2"></i>{{ __('admin.settings') }}
                     </a>
                 </li>
                 <li><hr class="dropdown-divider"></li>
@@ -105,7 +105,7 @@
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="dropdown-item">
-                            <i class="bi bi-box-arrow-right me-2"></i>Logout
+                            <i class="bi bi-box-arrow-right me-2"></i>{{ __('admin.logout') }}
                         </button>
                     </form>
                 </li>

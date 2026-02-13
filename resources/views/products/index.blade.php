@@ -7,7 +7,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Shop') }} - Products</title>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
@@ -125,13 +126,30 @@
                                             {{ Str::limit($product->name, 30) }}
                                         </a>
                                     </h5>
-                                    <p class="card-text text-muted small">{{ Str::limit($product->description, 60) }}</p>
+                                     <p class="card-text text-muted small">{{ Str::limit($product->description, 60) }}</p>
+                                     @if($product->approved_reviews_count > 0)
+                                         <div class="d-flex align-items-center gap-2 mb-2">
+                                             <div class="text-warning">
+                                                 @for($i = 1; $i <= 5; $i++)
+                                                     @if($i <= round($product->approved_reviews_avg_rating))
+                                                         <i class="bi bi-star-fill"></i>
+                                                     @else
+                                                         <i class="bi bi-star"></i>
+                                                     @endif
+                                                 @endfor
+                                             </div>
+                                             <small class="text-muted">({{ $product->approved_reviews_count }} reviews)</small>
+                                         </div>
+                                     @else
+                                         <small class="text-muted mb-2">No reviews yet</small>
+                                     @endif
                                     <div class="mt-auto">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <h4 class="mb-0 text-primary">${{ number_format($product->selling_price, 2) }}</h4>
-                                            <small class="text-muted">{{ $product->stock }} {{ $product->unit->short_name ?? $product->unit->name }}</small>
-                                        </div>
-                                        <form method="POST" action="{{ route('cart.add', $product->id) }}" class="m-0 js-add-to-cart-form">
+                                         <div class="d-flex justify-content-between align-items-center mb-2">
+                                             <h4 class="mb-0 text-primary">${{ number_format($product->selling_price, 2) }}</h4>
+                                             <small class="text-muted">{{ $product->stock }} {{ $product->unit->short_name ?? $product->unit->name }}</small>
+                                         </div>
+                                         <a href="{{ route('products.show', $product->slug) }}#reviews" class="btn btn-outline-secondary btn-sm mb-2">Write a Review</a>
+                                         <form method="POST" action="{{ route('cart.add', $product->id) }}" class="m-0 js-add-to-cart-form">
                                             @csrf
                                             <button type="submit" class="btn btn-primary w-100 js-add-to-cart-btn"
                                                 {{ ($product->not_for_sale || $product->stock <= 0) ? 'disabled' : '' }}>
@@ -191,6 +209,7 @@
         }
     </style>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function updateCartBadge(count) {
             document.querySelectorAll('[data-cart-badge]').forEach((el) => {
@@ -265,6 +284,7 @@
             });
         });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

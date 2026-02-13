@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\HeroSliderController as AdminHeroSliderController
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\RoleController as AdminRoleController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CategoryController as FrontCategoryController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\MyOrdersController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\WishlistController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\App;
 
@@ -40,6 +42,14 @@ Route::get('/language/{locale}', function (string $locale) {
 // Frontend Routes
 Route::get('/products', [FrontProductController::class, 'index'])->name('products.index');
 Route::get('/products/{product:slug}', [FrontProductController::class, 'show'])->name('products.show');
+Route::post('/products/{product:slug}/review', [FrontProductController::class, 'storeReview'])->name('products.review.store')->middleware('auth');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
+    Route::post('/wishlist/{product}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
+    Route::delete('/wishlist/{product}', [WishlistController::class, 'remove'])->name('wishlist.remove');
+    Route::post('/wishlist/{product}/move-to-cart', [WishlistController::class, 'moveToCart'])->name('wishlist.move-to-cart');
+});
 
 // Search
 Route::get('/search', [FrontProductController::class, 'search'])->name('search');
@@ -128,6 +138,12 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     // Users & Roles
     Route::resource('users', AdminUserController::class)->except(['show']);
     Route::resource('roles', AdminRoleController::class)->except(['show']);
+
+    // Reviews
+    Route::get('reviews', [AdminReviewController::class, 'index'])->name('reviews.index');
+    Route::patch('reviews/{review}/approve', [AdminReviewController::class, 'approve'])->name('reviews.approve');
+    Route::patch('reviews/{review}/reject', [AdminReviewController::class, 'reject'])->name('reviews.reject');
+    Route::delete('reviews/{review}', [AdminReviewController::class, 'destroy'])->name('reviews.destroy');
 });
 
 Route::middleware('auth')->group(function () {

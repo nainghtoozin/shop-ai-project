@@ -26,7 +26,9 @@
             <a class="navbar-brand fw-bold" href="{{ route('home') }}">
                 @php($logo = setting('site_logo'))
                 @if ($logo && \Illuminate\Support\Facades\Storage::disk('public')->exists($logo))
-                    <img src="{{ asset('storage/' . $logo) }}" alt="{{ setting('site_name', config('app.name', 'Shop')) }}" style="height: 28px; width: auto;" class="me-2">
+                    <img src="{{ asset('storage/' . $logo) }}"
+                        alt="{{ setting('site_name', config('app.name', 'Shop')) }}" style="height: 28px; width: auto;"
+                        class="me-2">
                 @else
                     <i class="bi bi-shop me-2"></i>
                 @endif
@@ -40,49 +42,62 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="{{ route('home') }}"><i class="bi bi-house me-1"></i> {{ __('messages.home') }}</a>
+                        <a class="nav-link active" href="{{ route('home') }}"><i class="bi bi-house me-1"></i>
+                            {{ __('messages.home') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('products.index') }}"><i class="bi bi-grid me-1"></i> {{ __('messages.products') }}</a>
+                        <a class="nav-link" href="{{ route('products.index') }}"><i class="bi bi-grid me-1"></i>
+                            {{ __('messages.products') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('categories.index') }}"><i class="bi bi-tag me-1"></i> {{ __('messages.categories') }}</a>
+                        <a class="nav-link" href="{{ route('categories.index') }}"><i class="bi bi-tag me-1"></i>
+                            {{ __('messages.categories') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-percent me-1"></i> {{ __('messages.deals') }}</a>
+                        <a class="nav-link" href="#"><i class="bi bi-percent me-1"></i>
+                            {{ __('messages.deals') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-info-circle me-1"></i> {{ __('messages.about') }}</a>
+                        <a class="nav-link" href="#"><i class="bi bi-info-circle me-1"></i>
+                            {{ __('messages.about') }}</a>
                     </li>
                 </ul>
 
                 <div class="d-flex align-items-center">
                     <div class="dropdown me-2">
                         @php($currentLocale = app()->getLocale())
-                        <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
                             <i class="bi bi-translate me-1"></i>{{ strtoupper($currentLocale) }}
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            @foreach (($supportedLocales ?? ['en' => 'English', 'my' => 'Myanmar']) as $code => $label)
+                            @foreach ($supportedLocales ?? ['en' => 'English', 'my' => 'Myanmar'] as $code => $label)
                                 <li>
-                                    <a class="dropdown-item {{ $currentLocale === $code ? 'active' : '' }}" href="{{ route('language.switch', $code) }}">
+                                    <a class="dropdown-item {{ $currentLocale === $code ? 'active' : '' }}"
+                                        href="{{ route('language.switch', $code) }}">
                                         {{ $label }} ({{ strtoupper($code) }})
                                     </a>
                                 </li>
                             @endforeach
                         </ul>
                     </div>
-                    <form action="{{ route('search') }}" method="GET" class="input-group me-2" style="max-width: 320px;">
-                        <input class="form-control" type="search" name="q" value="{{ request('q') }}" placeholder="{{ __('messages.search_placeholder') }}" aria-label="Search" autocomplete="off">
+                    <form action="{{ route('search') }}" method="GET" class="input-group me-2"
+                        style="max-width: 320px;">
+                        <input class="form-control" type="search" name="q" value="{{ request('q') }}"
+                            placeholder="{{ __('messages.search_placeholder') }}" aria-label="Search"
+                            autocomplete="off">
                         <button class="btn btn-outline-light" type="submit" aria-label="Search">
                             <i class="bi bi-search"></i>
                         </button>
                     </form>
 
-                    <a href="{{ route('cart.index') }}" class="btn btn-outline-light position-relative me-2" aria-label="Cart">
+                    <a href="{{ route('cart.index') }}" class="btn btn-outline-light position-relative me-2"
+                        aria-label="Cart">
                         <i class="bi bi-cart3"></i>
                         @php($navCartCount = collect(session('cart', []))->sum('quantity'))
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger {{ $navCartCount > 0 ? '' : 'd-none' }}" data-cart-badge>
+                        <span
+                            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger {{ $navCartCount > 0 ? '' : 'd-none' }}"
+                            data-cart-badge>
                             <span data-cart-count>{{ $navCartCount }}</span>
                             <span class="visually-hidden">items in cart</span>
                         </span>
@@ -152,8 +167,9 @@
                 <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="6000">
                     <div class="carousel-indicators">
                         @foreach ($heroSliders as $i => $slide)
-                            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ $i }}"
-                                class="{{ $i === 0 ? 'active' : '' }}" aria-current="{{ $i === 0 ? 'true' : 'false' }}"
+                            <button type="button" data-bs-target="#heroCarousel"
+                                data-bs-slide-to="{{ $i }}" class="{{ $i === 0 ? 'active' : '' }}"
+                                aria-current="{{ $i === 0 ? 'true' : 'false' }}"
                                 aria-label="Slide {{ $i + 1 }}"></button>
                         @endforeach
                     </div>
@@ -166,17 +182,23 @@
                                 @php($slideSubtitle = $slide->subtitle)
 
                                 @if ($slideUrl)
-                                    <a href="{{ $slideUrl }}" target="_blank" rel="noopener" class="d-block text-decoration-none">
+                                    <a href="{{ $slideUrl }}" target="_blank" rel="noopener"
+                                        class="d-block text-decoration-none">
                                 @endif
 
                                 <div class="position-relative">
-                                    <img src="{{ asset('storage/' . $slide->image) }}" class="d-block w-100" alt="{{ $slideTitle }}" style="height: 420px; object-fit: cover;">
-                                    <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(90deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.15) 60%, rgba(0,0,0,0) 100%);"></div>
+                                    <img src="{{ asset('storage/' . $slide->image) }}" class="d-block w-100"
+                                        alt="{{ $slideTitle }}" style="height: 420px; object-fit: cover;">
+                                    <div class="position-absolute top-0 start-0 w-100 h-100"
+                                        style="background: linear-gradient(90deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.15) 60%, rgba(0,0,0,0) 100%);">
+                                    </div>
 
-                                    <div class="carousel-caption text-start" style="left: 8%; right: 8%; bottom: 2.25rem;">
+                                    <div class="carousel-caption text-start"
+                                        style="left: 8%; right: 8%; bottom: 2.25rem;">
                                         @if ($slide->badge_text)
                                             <div class="mb-2">
-                                                <span class="badge bg-warning text-dark">{{ $slide->badge_text }}</span>
+                                                <span
+                                                    class="badge bg-warning text-dark">{{ $slide->badge_text }}</span>
                                             </div>
                                         @endif
 
@@ -197,11 +219,13 @@
                         @endforeach
                     </div>
 
-                    <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+                    <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel"
+                        data-bs-slide="prev">
                         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                         <span class="visually-hidden">Previous</span>
                     </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+                    <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel"
+                        data-bs-slide="next">
                         <span class="carousel-control-next-icon" aria-hidden="true"></span>
                         <span class="visually-hidden">Next</span>
                     </button>
@@ -303,7 +327,8 @@
                                 <p class="card-text text-muted">
                                     {{ Str::limit($category->description, 80) }}
                                 </p>
-                                <a href="{{ route('category.show', $category->slug) }}" class="btn btn-outline-primary">Shop Now</a>
+                                <a href="{{ route('category.show', $category->slug) }}"
+                                    class="btn btn-outline-primary">Shop Now</a>
                             </div>
                         </div>
                     </div>
@@ -340,7 +365,8 @@
                             </div>
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title mb-2">
-                                    <a href="{{ route('products.show', $product->slug) }}" class="product-title-link">
+                                    <a href="{{ route('products.show', $product->slug) }}"
+                                        class="product-title-link">
                                         {{ Str::limit($product->name, 30) }}
                                     </a>
                                 </h5>
@@ -364,10 +390,11 @@
                                             {{ $product->unit->short_name ?? $product->unit->name }}</small>
                                     </div>
                                     <div class="d-grid">
-                                        <form method="POST" action="{{ route('cart.add', $product->id) }}" class="m-0 js-add-to-cart-form">
+                                        <form method="POST" action="{{ route('cart.add', $product->id) }}"
+                                            class="m-0 js-add-to-cart-form">
                                             @csrf
                                             <button type="submit" class="btn btn-primary w-100 js-add-to-cart-btn"
-                                                {{ ($product->not_for_sale || $product->stock <= 0) ? 'disabled' : '' }}>
+                                                {{ $product->not_for_sale || $product->stock <= 0 ? 'disabled' : '' }}>
                                                 <span class="js-add-to-cart-label">
                                                     <i class="bi bi-cart-plus me-2"></i>Add to Cart
                                                 </span>
@@ -428,7 +455,9 @@
                         <div class="d-flex align-items-start gap-3">
                             <div class="footer-ecom__mark">
                                 @if ($footerLogo && \Illuminate\Support\Facades\Storage::disk('public')->exists($footerLogo))
-                                    <img src="{{ asset('storage/' . $footerLogo) }}" alt="{{ setting('site_name', config('app.name', 'Shop')) }}" class="footer-ecom__logo">
+                                    <img src="{{ asset('storage/' . $footerLogo) }}"
+                                        alt="{{ setting('site_name', config('app.name', 'Shop')) }}"
+                                        class="footer-ecom__logo">
                                 @else
                                     <div class="footer-ecom__logo-fallback">
                                         <i class="bi bi-shop"></i>
@@ -438,7 +467,8 @@
 
                             <div class="flex-grow-1">
                                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                                    <div class="footer-ecom__brand fw-bold">{{ setting('site_name', config('app.name', 'Shop')) }}</div>
+                                    <div class="footer-ecom__brand fw-bold">
+                                        {{ setting('site_name', config('app.name', 'Shop')) }}</div>
                                     <span class="badge rounded-pill footer-ecom__pill">Online Store</span>
                                 </div>
                                 <p class="footer-ecom__desc text-white-50 mb-0">
@@ -448,11 +478,7 @@
                                 <div class="mt-4">
                                     <div class="text-uppercase text-white-50 small fw-semibold mb-2">Social</div>
                                     <div class="d-flex gap-2">
-                                        @php($social = [
-                                            ['label' => 'Facebook', 'url' => $facebook, 'icon' => 'bi-facebook'],
-                                            ['label' => 'Instagram', 'url' => $instagram, 'icon' => 'bi-instagram'],
-                                            ['label' => 'Telegram', 'url' => $telegram, 'icon' => 'bi-telegram'],
-                                        ])
+                                        @php($social = [['label' => 'Facebook', 'url' => $facebook, 'icon' => 'bi-facebook'], ['label' => 'Instagram', 'url' => $instagram, 'icon' => 'bi-instagram'], ['label' => 'Telegram', 'url' => $telegram, 'icon' => 'bi-telegram']])
                                         @foreach ($social as $s)
                                             @if (!empty($s['url']))
                                                 <a href="{{ $s['url'] }}" target="_blank" rel="noopener"
@@ -461,7 +487,8 @@
                                                 </a>
                                             @else
                                                 <span class="footer-ecom__social footer-ecom__social--disabled"
-                                                    aria-label="{{ $s['label'] }} (not configured)" title="{{ $s['label'] }} not configured">
+                                                    aria-label="{{ $s['label'] }} (not configured)"
+                                                    title="{{ $s['label'] }} not configured">
                                                     <i class="bi {{ $s['icon'] }}"></i>
                                                 </span>
                                             @endif
@@ -514,13 +541,15 @@
                                         @if ($contactPhone)
                                             <div class="footer-ecom__contact-row">
                                                 <i class="bi bi-telephone"></i>
-                                                <a href="tel:{{ preg_replace('/\s+/', '', $contactPhone) }}" class="text-white-50 text-decoration-none">{{ $contactPhone }}</a>
+                                                <a href="tel:{{ preg_replace('/\s+/', '', $contactPhone) }}"
+                                                    class="text-white-50 text-decoration-none">{{ $contactPhone }}</a>
                                             </div>
                                         @endif
                                         @if ($contactEmail)
                                             <div class="footer-ecom__contact-row">
                                                 <i class="bi bi-envelope"></i>
-                                                <a href="mailto:{{ $contactEmail }}" class="text-white-50 text-decoration-none">{{ $contactEmail }}</a>
+                                                <a href="mailto:{{ $contactEmail }}"
+                                                    class="text-white-50 text-decoration-none">{{ $contactEmail }}</a>
                                             </div>
                                         @endif
                                     </div>
@@ -532,7 +561,8 @@
                             <div class="col-12">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <div class="text-uppercase text-white-50 small fw-semibold">Accepted Payments</div>
-                                    <a href="{{ route('checkout.index') }}" class="footer-ecom__micro-link text-white-50 small text-decoration-none">
+                                    <a href="{{ route('checkout.index') }}"
+                                        class="footer-ecom__micro-link text-white-50 small text-decoration-none">
                                         Checkout <i class="bi bi-arrow-right ms-1"></i>
                                     </a>
                                 </div>
@@ -550,9 +580,12 @@
                                     </div>
                                 @else
                                     <div class="d-flex flex-wrap gap-2">
-                                        <span class="footer-ecom__pay-pill footer-ecom__pay-pill--placeholder"><i class="bi bi-cash-coin"></i><span>Cash</span></span>
-                                        <span class="footer-ecom__pay-pill footer-ecom__pay-pill--placeholder"><i class="bi bi-bank"></i><span>Bank Transfer</span></span>
-                                        <span class="footer-ecom__pay-pill footer-ecom__pay-pill--placeholder"><i class="bi bi-phone"></i><span>Mobile Wallet</span></span>
+                                        <span class="footer-ecom__pay-pill footer-ecom__pay-pill--placeholder"><i
+                                                class="bi bi-cash-coin"></i><span>Cash</span></span>
+                                        <span class="footer-ecom__pay-pill footer-ecom__pay-pill--placeholder"><i
+                                                class="bi bi-bank"></i><span>Bank Transfer</span></span>
+                                        <span class="footer-ecom__pay-pill footer-ecom__pay-pill--placeholder"><i
+                                                class="bi bi-phone"></i><span>Mobile Wallet</span></span>
                                     </div>
                                 @endif
                             </div>
@@ -566,7 +599,8 @@
             <div class="container">
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
                     <div class="text-white-50 small">
-                        &copy; {{ date('Y') }} {{ setting('site_name', config('app.name', 'Shop')) }}. All rights reserved.
+                        &copy; {{ date('Y') }} {{ setting('site_name', config('app.name', 'Shop')) }}. All
+                        rights reserved.
                     </div>
                     <div class="text-white-50 small">
                         <span class="me-3"><i class="bi bi-shield-lock me-1"></i>Secure payment</span>
@@ -771,7 +805,10 @@
     <script>
         function formatMoney(value) {
             const n = Number(value || 0);
-            return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return n.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
         }
 
         function updateCartBadge(count) {
@@ -794,7 +831,8 @@
             toast.innerHTML =
                 '<div class="alert alert-' + (type || 'success') + ' shadow-sm mb-0" role="alert">' +
                 '<div class="d-flex align-items-center">' +
-                '<div class="me-2"><i class="bi ' + ((type || 'success') === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle') + '"></i></div>' +
+                '<div class="me-2"><i class="bi ' + ((type || 'success') === 'success' ? 'bi-check-circle' :
+                    'bi-exclamation-triangle') + '"></i></div>' +
                 '<div class="flex-grow-1">' + message + '</div>' +
                 '<button type="button" class="btn-close ms-2" aria-label="Close"></button>' +
                 '</div>' +
